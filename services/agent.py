@@ -78,9 +78,10 @@ def ejecutar_agente(numero, empresa, mensaje):
     
     elif "catalogo" in intent:
         respuesta = "✨ Con gusto te comparto nuestro catálogo. Manejamos las mejores marcas: New Athletic, Irun, Walon (solo fútbol), Dariems y Dromedar (solo urbana caña alta), todas importadas; además de Ivano, que es cuero nacional. 🇵🇪\n¿En qué categoría estás interesado?\n* 👠 Dama\n* 👟 Varón\n* 👧 Niño\n* ⚽ Fútbol\nTips de tallas:\n* 🌍 Importadas: La horma es pequeña.\n* 🇵🇪 Ivano: Cuero nacional de horma completa."
+        registrar_lead(numero, mensaje, empresa, historial)
         cambiar_modo(numero, "CATALOGO")
     elif "promociones" in intent:
-        respuesta = """🔥 NUESTRA PROMOCIÓN MÁS PRÓXIMA:\n✅ Toda la tienda a precio por mayor ⚠️\nAdemás tenemos 2x1 únicamente en modelos seleccionados, los modelos de esta promoción solo estarán disponibles en tienda física.\n📍 UBICACIONES:\n* Calle San Juan de Dios 527\n* Calle San Juan de Dios 400H\n⚠️ RECUERDA: Los precios de Mayorista y el 2x1 solo rigen el 20, 21 y 22 de abril. ¡No olvides seguirnos en Instagram y TikTok como @newsneaker.aqp para validar tu descuento!\nHay algo mas en lo que puedas ayudarte?"""
+        respuesta = "¡Hola! 👋 Por ahora no tenemos promociones activas, pero ¡mantente alerta! 🚨 Ya estamos alistando los mejores modelos y sorpresas para celebrar el Día del Trabajo. 👷‍♂️👟\n¡Se viene un drop increíble que no querrás perderte! 🔥\n¿Hay algo más en lo que pueda ayudarte hoy? 😊"
     
     elif "replica" in intent:
         respuesta = """En New Sneaker somos Distribuidores Autorizados de todas las marcas que ves en nuestro catálogo (New Athletic, I Run, Ivano, Dariem, entre otras).
