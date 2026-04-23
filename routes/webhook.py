@@ -96,6 +96,10 @@ async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente):
         elif respuesta == "__CATALOGO_FUTBOL__":
             await enviar_documento(
                 numero_cliente,
+                "https://chatbot-production-fbd9.up.railway.app/static/catalogo_futbol2.pdf",
+                "Catalogo Futbol.pdf",)
+            await enviar_documento(
+                numero_cliente,
                 "https://chatbot-production-fbd9.up.railway.app/static/catalogo_futbol.pdf",
                 "Catalogo Futbol.pdf",
                 "👟 Te compartimos nuestro catálogo con las actualizaciones mas recientes.\n 🔥 Recuerda que renovamos nuestrostock casi a diario , por lo que te recomendamos visitarnos en nuestra tienda fisica.🎯  Alli encontraras promociones unicas! "
