@@ -40,7 +40,7 @@ def ejecutar_agente(numero, empresa, mensaje):
                 else:
                     respuesta = mensaje_sin_catalogo
             
-            elif any(x in msg for x in ["futbol", "fútbol", "chimpun", "chimpunes", "botines"]):
+            elif any(x in msg for x in ["futbol", "fútbol", "chimpun", "chimpunes", "choteras"]):
                 if os.path.exists(ruta_futbol):
                     respuesta = "__CATALOGO_FUTBOL__"
                     cambiar_modo(numero, "AUTO")
