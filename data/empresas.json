@@ -32,6 +32,11 @@
       "tarjeta_pos": "3.5% adicional (Cargo por mantenimiento de la empresa operadora)"
     },
     "contacto": "943631249",
-    "email": "newsneakerssac05@gmail.com"
-  }
+    "email": "newsneakerssac05@gmail.com",
+    "categorias": {
+        "Dama": "👠",
+        "Varón": "👟",
+        "Niño": "👧",
+        "Fútbol": "⚽"}
+    }
 ]

@@ -74,7 +74,7 @@ def buscar_modo_en_sheet(numero):
         return "AUTO"
 
 def identificar_servicio(mensaje,empresa):
-    servicios = empresa.get("servicios", {}).keys()
+    servicios = empresa.get("categorias", {}).keys()
 
     mensaje = mensaje.lower()
     palabras = mensaje.split()
