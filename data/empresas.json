@@ -1,0 +1,37 @@
+[
+  {
+    "numero": "943631249",
+    "nombre": "New Sneakers",
+    "objetivo": "Venta y atención al cliente",
+    "marcas_disponibles": {
+        "NEW ATHLETIC": "Importado - Deportivo (Running) y Urbano.",
+        "I RUN": "Importado - Especialistas en estilo Urbano y Deportivo ligero.",
+        "DROMEDAR": "Importado - Calzado resistente y casual.",
+        "IVANO": "línea de cuero nacional - Estilo Urbano y comodidad.",
+        "PUNTO": "Importado - Variedad en modelos casuales y deportivos.",
+        "WALON": "Importado - Especialistas en Fútbol y Futsal."
+    },
+    "ubicacion": { 
+      "sede_principal": "Calle San Juan de Dios 527 (Lunes a Domingos)",
+      "sede_secundaria": "Calle San Juan de Dios 400H (Lunes a Sábado)"},
+    "descripcion": "Calzado Multimarca Importado.",
+    "horario": {
+        "lunes_a_viernes": "9:00 AM - 8:00 PM",
+        "sabado": "9:00 AM - 8:30 PM",
+        "domingo": "11:00 AM - 5:00 PM (solo la sede principal Calle San Juan de Dios 527) ",
+        "atencion_feriados": "Atendemos feriados sujeto a confirmación (Consultar disponibilidad el mismo día)."
+    },
+    "politica_cambios": {
+        "plazo": "7 días calendario",
+        "condiciones": "Producto en óptimo estado, caja original y bolsa de la tienda",
+        "excepciones": "No se aceptan cambios ni devoluciones en productos de OFERTA",
+        "devoluciones": "No se realizan devoluciones de dinero (solo cambios)"
+    },
+    "pagos": {
+      "directo": "Yape, Plin, Transferencia(Sin comisión)",
+      "tarjeta_pos": "3.5% adicional (Cargo por mantenimiento de la empresa operadora)"
+    },
+    "contacto": "943631249",
+    "email": "newsneakerssac05@gmail.com"
+  }
+]
