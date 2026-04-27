@@ -96,7 +96,11 @@ def iniciar_google():
     "Empresa",
     "Dia",
     "Hora",
-    "Estado"]
+    "Estado",
+    "pais",
+    "dia_semana",
+    "turno",
+    "intercambios"]
 
     fila1 = sheet_leads.row_values(1)
 
