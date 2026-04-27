@@ -12,6 +12,57 @@ from googleapiclient.discovery import build
 client = None
 sheet_leads = None
 
+def extraer_dia_semana(fecha) -> str:
+    dias = {
+        0: "Lunes", 1: "Martes", 2: "Miércoles",
+        3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"
+    }
+    return dias[fecha.weekday()]
+
+def extraer_turno(fecha) -> str:
+    hora = fecha.hour
+    if 6 <= hora < 12:
+        return "Mañana"
+    elif 12 <= hora < 18:
+        return "Tarde"
+    elif 18 <= hora < 23:
+        return "Noche"
+    else:
+        return "Madrugada"
+
+def contar_intercambios(historial: list) -> int:
+    return len(historial)
+
+def extraer_pais(numero: str) -> str:
+    numero = str(numero).strip().lstrip("+")
+    prefijos = {
+        "54": "Argentina",
+        "51": "Perú",
+        "55": "Brasil",
+        "56": "Chile",
+        "57": "Colombia",
+        "58": "Venezuela",
+        "591": "Bolivia",
+        "593": "Ecuador",
+        "595": "Paraguay",
+        "598": "Uruguay",
+        "502": "Guatemala",
+        "503": "El Salvador",
+        "504": "Honduras",
+        "505": "Nicaragua",
+        "506": "Costa Rica",
+        "507": "Panamá",
+        "52": "México",
+        "1":  "EE.UU. / Canadá",
+        "34": "España",
+    }
+    # Primero intenta prefijos de 3 dígitos, luego 2
+    for largo in (3, 2, 1):
+        clave = numero[:largo]
+        if clave in prefijos:
+            return prefijos[clave]
+    return "Desconocido"
+
 def iniciar_google():
     global client, sheet_leads
 
@@ -106,6 +157,11 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
         )
 
         servicios = identificar_servicio(mensaje, empresa)
+        pais = extraer_pais(numero)
+
+        dia_semana    = extraer_dia_semana(fecha)
+        turno         = extraer_turno(fecha)
+        intercambios  = contar_intercambios(historial)
 
         columna_numeros = sheet.col_values(3)
 
@@ -126,9 +182,13 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
                 contexto,
                 servicios,
                 empresa["nombre"],
-                fecha.strftime("%d-%m-%Y"),
+                fecha.strftime("%Y-%m-%d"),
                 fecha.strftime("%H:%M"),
-                "Actualizado"
+                "Actualizado",
+                pais,
+                dia_semana,                  
+                turno,                       
+                intercambios 
             ]])
 
             print("✅ Cliente actualizado")
@@ -145,7 +205,11 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "Pendiente"
+                "Pendiente",
+                pais,
+                dia_semana,                  
+                turno,                       
+                intercambios 
             ]
 
             sheet.append_row(fila)
@@ -219,6 +283,11 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
         contexto = " | ".join(ultimos)
 
         servicios = identificar_servicio(mensaje, empresa)
+        pais = extraer_pais(numero)
+
+        dia_semana    = extraer_dia_semana(fecha)
+        turno         = extraer_turno(fecha)
+        intercambios  = contar_intercambios(historial)
 
         columna_numeros = sheet.col_values(3)
 
@@ -241,7 +310,11 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "HABLADO CON ASESOR"
+                "HABLADO CON ASESOR",
+                pais,
+                dia_semana,                  
+                turno,                       
+                intercambios 
             ]])
 
             print("✅ Cliente actualizado seguimiento asesor!")
@@ -258,7 +331,11 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "HABLADO CON ASESOR"
+                "HABLADO CON ASESOR",
+                pais,
+                dia_semana,                  
+                turno,                       
+                intercambios 
             ]
 
             sheet.append_row(fila)

@@ -67,7 +67,6 @@ def guardar_interaccion(numero, role, mensaje):
         print("a data es :", data)
         data["last_update"] = time.time()
 
-
 def obtener_historial(numero):
     with lock:
         data = memory_store.get(numero)
