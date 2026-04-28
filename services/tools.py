@@ -97,10 +97,10 @@ def iniciar_google():
     "Dia",
     "Hora",
     "Estado",
-    "pais",
-    "dia_semana",
-    "turno",
-    "intercambios"]
+    "Pais",
+    "Dia_Semana",
+    "Turno",
+    "Intercambios"]
 
     fila1 = sheet_leads.row_values(1)
 
@@ -181,7 +181,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
 
         if fila_existente:
 
-            sheet.update(f"D{fila_existente}:J{fila_existente}",[[
+            sheet.update(f"D{fila_existente}:N{fila_existente}",[[
                 mensaje,
                 contexto,
                 servicios,
@@ -207,7 +207,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
                 contexto,
                 servicios,
                 empresa["nombre"],
-                fecha.strftime("%d-%m-%Y"),
+                fecha.strftime("%Y-%m-%d"),
                 fecha.strftime("%H:%M"),
                 "Pendiente",
                 pais,
@@ -307,12 +307,12 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
 
         if fila_existente:
 
-            sheet.update(f"D{fila_existente}:J{fila_existente}",[[
+            sheet.update(f"D{fila_existente}:N{fila_existente}",[[
                 mensaje,
                 contexto,
                 servicios,
                 empresa["nombre"],
-                fecha.strftime("%d-%m-%Y"),
+                fecha.strftime("%Y-%m-%d"),
                 fecha.strftime("%H:%M"),
                 "HABLADO CON ASESOR",
                 pais,
@@ -333,7 +333,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 contexto,
                 servicios,
                 empresa["nombre"],
-                fecha.strftime("%d-%m-%Y"),
+                fecha.strftime("%Y-%m-%d"),
                 fecha.strftime("%H:%M"),
                 "HABLADO CON ASESOR",
                 pais,
