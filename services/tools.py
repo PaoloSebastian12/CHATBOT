@@ -159,8 +159,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
         fecha = datetime.datetime.now(zona_horaria)
 
         contexto = " | ".join(
-            h["content"] for h in historial[-3:]
-        )
+            h["content"] for h in historial)
 
         servicios = identificar_servicio(mensaje, empresa)
         pais = extraer_pais(numero)
@@ -284,7 +283,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
 
         fecha = datetime.datetime.now(zona_horaria)
 
-        ultimos = [h["content"] for h in historial[-3:]]
+        ultimos = [h["content"] for h in historial]
         ultimos.append(f"BOT: {respuesta}")
         contexto = " | ".join(ultimos)
 
