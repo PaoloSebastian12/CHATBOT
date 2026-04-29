@@ -74,7 +74,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
             contexto += f"assistant: {h['content']}\n"
 
     prompt = f"""
-    Eres un asistente virtual de atención al cliente ,Estilo: Amigável, prestativo e profissional. Use emojis pertinentes e mantenha respostas concisas.  
+    Eres un asistente virtual de atención al cliente ,Estilo: amigable y profesional. Use emojis y brinda solo la informacion que te pide el cliente.  
 
     Tu objetivo es {empresa['objetivo']}.
 
@@ -101,7 +101,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     - No asumas que quiere comprar
     - No generes mensajes de seguimiento comercial a menos que el cliente lo indique
     - No utilices conocimientos externos ni supongas detalles que no estén escritos arriba. Tu respuesta debe estar fundamentada al 100% en el contexto brindado.
-    - Reformula la información de manera natural, clara y atractiva.Fundamentada al 100% en el contexto brindado
+    - Reformula la información de manera natural, clara y atractiva.Responde solo lo que te piden.
     - Si no sabes, di: "No tengo esa información, un asesor te contactará".
     - No respondan nada en JSON
 

@@ -73,8 +73,9 @@ def ejecutar_agente(numero, empresa, mensaje):
     elif any(x in intent for x in ["compra", "agendamiento"]):
         registrar_lead(numero, mensaje, empresa,historial)
         send_alert( empresa["email"],mensaje,empresa,numero,historial)
-        cambiar_modo(numero, "HUMANO")
         respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida."
+        cambiar_modo(numero, "HUMANO")
+        
     
     elif "catalogo" in intent:
         respuesta = "✨ Con gusto te comparto nuestro catálogo. Manejamos las mejores marcas: New Athletic, Irun, Walon (solo fútbol), Dariems y Dromedar (solo urbana caña alta), todas importadas; además de Ivano, que es cuero nacional. 🇵🇪\n¿En qué categoría estás interesado?\n* 👠 Dama\n* 👟 Varón\n* 👧 Niño\n* ⚽ Fútbol\nTips de tallas:\n* 🌍 Importadas: La horma es pequeña.\n* 🇵🇪 Ivano: Cuero nacional de horma completa."
