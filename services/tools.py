@@ -166,7 +166,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
         contexto = " | ".join(
             h["content"] for h in historial)
 
-        servicios = identificar_servicio(mensaje, empresa)
+        servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
 
         dia_semana    = extraer_dia_semana(fecha)
@@ -292,7 +292,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
         ultimos.append(f"BOT: {respuesta}")
         contexto = " | ".join(ultimos)
 
-        servicios = identificar_servicio(mensaje, empresa)
+        servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
 
         dia_semana    = extraer_dia_semana(fecha)
