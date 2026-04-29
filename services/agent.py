@@ -8,6 +8,7 @@ import re
 def ejecutar_agente(numero, empresa, mensaje):
     guardar_interaccion(numero, "user", mensaje)
     historial = obtener_historial(numero)
+    print(f"\n📜 Historial dentro de ejecutar_agente {numero}:\n{historial}\n")
 
     intent = clasificar_intencion(mensaje, historial)
     modo = obtener_modo(numero)
