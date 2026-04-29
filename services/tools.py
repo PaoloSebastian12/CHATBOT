@@ -9,6 +9,7 @@ import json
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import pytz
+from collections import Counter
 
 client = None
 sheet_leads = None
@@ -130,28 +131,32 @@ def buscar_modo_en_sheet(numero):
         print("❌ Error buscando modo:", e)
         return "AUTO"
 
-def identificar_servicio(mensaje,empresa):
+def identificar_servicio(historial,empresa):
     servicios = empresa.get("categorias", {}).keys()
+    if not servicios:
+        return "No identificado"
 
-    mensaje = mensaje.lower()
-    palabras = mensaje.split()
-
-    encontrados = set()
+    mensaje = [h["content"].lower() for h in historial if h["role"] == "user"]
+    texto_completo = " ".join(mensaje)
+    palabras = texto_completo.split()
+    conteo = Counter()
 
     for servicio in servicios:
         nombre = servicio.lower()
 
-        if nombre in mensaje:
-            encontrados.add(servicio)
+        if nombre in texto_completo:
+            conteo[servicio] += texto_completo.count(nombre)
             continue
 
         for palabra in palabras:
             if fuzz.partial_ratio(nombre, palabra) >= 80:
-                encontrados.add(servicio)
+                conteo[servicio] += 1
                 break
+    if not conteo:
+        return "No identificado"
+    categoria_favorita = conteo.most_common(1)[0][0]
+    return categoria_favorita
 
-    return ", ".join(encontrados) if encontrados else "No identificado"
-    
 def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
     try:
         sheet = iniciar_google()

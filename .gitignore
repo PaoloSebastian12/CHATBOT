@@ -20,3 +20,4 @@ token.json
 habilitaapigmail.py
 token_personal.json
 credentials_gmail_persona.json
+generator.py
