@@ -102,12 +102,13 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     - No generes mensajes de seguimiento comercial a menos que el cliente lo indique
     - No utilices conocimientos externos ni supongas detalles que no estén escritos arriba. Tu respuesta debe estar fundamentada al 100% en el contexto brindado.
     - Reformula la información de manera natural, clara y atractiva.Responde solo lo que te piden.
-    - Si no sabes, di: "No tengo esa información, un asesor te contactará".
+    - Si no sabes, di: "No tengo esa información, por acercate a nuestras tiendas fisicas".(brindas ubicacion y horario)
     - Cuando te pidan foto pregunta si quieren ver el catalogo (diles que escriban catalogo para verlo)
 
     Cliente: {mensaje}
     Respuesta:
     """
+    #Si no sabes, di: "No tengo esa información, un asesor te contactará".
     try:
         response = model.generate_content(prompt)
         return response.text.strip()
