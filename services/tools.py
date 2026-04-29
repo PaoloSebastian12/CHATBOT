@@ -8,9 +8,11 @@ from thefuzz import fuzz
 import json
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+import pytz
 
 client = None
 sheet_leads = None
+zona_horaria = pytz.timezone('America/Lima')
 
 def extraer_dia_semana(fecha) -> str:
     dias = {
@@ -154,7 +156,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
     try:
         sheet = iniciar_google()
 
-        fecha = datetime.datetime.now()
+        fecha = datetime.datetime.now(zona_horaria)
 
         contexto = " | ".join(
             h["content"] for h in historial[-3:]
@@ -280,7 +282,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
     try:
         sheet = iniciar_google()
 
-        fecha = datetime.datetime.now()
+        fecha = datetime.datetime.now(zona_horaria)
 
         ultimos = [h["content"] for h in historial[-3:]]
         ultimos.append(f"BOT: {respuesta}")
