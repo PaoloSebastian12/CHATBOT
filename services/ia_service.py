@@ -103,7 +103,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     - No utilices conocimientos externos ni supongas detalles que no estén escritos arriba. Tu respuesta debe estar fundamentada al 100% en el contexto brindado.
     - Reformula la información de manera natural, clara y atractiva.Responde solo lo que te piden.
     - Si no sabes, di: "No tengo esa información, un asesor te contactará".
-    - No respondan nada en JSON
+    - Cuando te pidan foto pregunta si quieren ver el catalogo (diles que escriban catalogo para verlo)
 
     Cliente: {mensaje}
     Respuesta:
