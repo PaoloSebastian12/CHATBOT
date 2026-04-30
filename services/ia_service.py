@@ -20,7 +20,7 @@ PROJECT_ID = "project-2641fa03-f32f-4d6f-ba8"
 LOCATION = "us-central1"
 
 vertexai.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-model = GenerativeModel("gemini-2.5-flash")
+model = GenerativeModel("gemini-3.1-flash-lite-preview")
 
 #gemini-3.1-flash-lite-preview
 def clasificar_intencion(mensaje, historial):
