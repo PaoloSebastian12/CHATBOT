@@ -49,9 +49,29 @@ async def enviar_documento(numero_cliente, url_documento, nombre_archivo,texto="
     except Exception as e:
         print("❌ Error enviando documento:", str(e))
 
-async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente):
+async def marcar_como_leido(message_id):
     try:
-        print(f"🤖 Procesando IA para {numero_cliente}...")
+        url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
+        headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messaging_product": "whatsapp",
+            "status": "read",
+            "message_id": message_id
+        }
+        print("----------MARCANDO COMO LEIDO----------")
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url, json=payload, headers=headers)
+            return r.status_code
+    except Exception as e:
+        print(f"Error al marcar como leído: {e}")
+
+async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente, message_id):
+    try:
+        await marcar_como_leido(message_id)
+        print(f"\n🤖 Procesando IA para {numero_cliente}...\n")
         print(f"\n✅ Mensaje del cliente: {mensaje_limpio}\n")
         # Ejecutamos la IA en un hilo separado para que no bloquee el servidor
         respuesta = await asyncio.to_thread(answer, mensaje_limpio, empresa, numero_cliente)
@@ -153,7 +173,7 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         if "messages" not in data["entry"][0]["changes"][0]["value"]:
             return {"status": "ok"}
         message_obj = data["entry"][0]["changes"][0]["value"]["messages"][0]
-
+        mensaje_id = message_obj["id"]
         mensaje_timestamp = int(message_obj.get("timestamp", 0))
         tiempo_actual = int(time.time())
         if (tiempo_actual - mensaje_timestamp) > 400:
@@ -179,7 +199,7 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
             print("👨‍💼 Chat en modo humano. IA bloqueada.")
             return {"status": "modo humano"}
         mensaje = clean_text(mensaje)
-        background_tasks.add_task(procesar_ia_y_enviar, mensaje, empresa, numero_cliente)
+        background_tasks.add_task(procesar_ia_y_enviar, mensaje, empresa, numero_cliente,mensaje_id)
         return {"status": "ok"}
     except Exception as e:
         print("ERROR:", str(e))
