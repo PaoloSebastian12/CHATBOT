@@ -61,7 +61,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
             contexto += f"assistant: {h['content']}\n"
 
     prompt = f"""
-    Eres un asistente virtual de {empresa['nombre']} atención al cliente,Estilo: amigable,profesional,Usa emojis y brinda solo la informacion que te pide el cliente.  
+    Eres un asistente virtual de {empresa['nombre']} atención al cliente,Estilo: amigable,profesional,breve.Usa emojis.  
     Objetivo: {empresa['objetivo']}
 
     DATOS EMPRESA:
@@ -72,6 +72,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     - Cambios/devoluciones: {empresa['politica_cambios']}
 
     Reglas:
+    - NO saludes si la conversación ya está en curso (mira el contexto previo)
     - Responde SOLO lo pedido basándote exclusivamente en el contexto. Responde solo lo que te piden.
     - Si desconoces algo, di: "No tengo esa información, por favor acércate a nuestra tienda" (da horario/ubicación).
     - Si piden fotos, ofrece el catálogo (indica que escriban "catalogo").
