@@ -32,12 +32,12 @@ def clasificar_intencion(mensaje, historial):
     Clasifica el siguiente mensaje en UNA palabra:
     Reglas:
     - Si el cliente pregunta por precios, clasificalo como "duda"
-    - Solo utiliza explicitamente las palabras "agendar" o "comprar" cuando el cliente lo solicite de forma explícita.
     - Se considera solicitud explícita cuando el cliente usa frases directas como: "quiero agendar", "puedo agendar", "quiero comprar", "cómo compro", etc.(si preguntan por el catalogo categorizalo mejor en catalogo)
     - Si el cliente únicamente muestra interés, hace preguntas o pide información (por ejemplo: "me interesa", "cuánto cuesta", "cómo funciona"), debes clasificarlo como "duda" y NO asumir intención de agendar o comprar.
     - Nunca infieras intención de compra o agendamiento si no está claramente expresada por el cliente.
     - Categoriza como promociones si el cliente pregunta por alguna promocion.
-    - Solo si preguntan si es replica o si son originales pon replica
+    - Solo si preguntan si es replica o si son originales pon replica.
+    - Si pregunta por zapatillas de dama o varon o alguna zapatila de un tipo ponlo como "catalogo"
 
     Opciones:
     - saludo
@@ -81,7 +81,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     Empresa: {empresa['nombre']}
     Descripción: {empresa['descripcion']}
     Horario: {empresa['horario']}
-    Ubicación: {empresa['ubicacion']}
+    Ubicación: {empresa['ubicacion']} (arequipa, peru)
 
     servicios y/o productos:
     {empresa['marcas_disponibles']} ( todos los que son importados poseen una horma pequeña, recomendamos llevar una talla más de la habitual)
