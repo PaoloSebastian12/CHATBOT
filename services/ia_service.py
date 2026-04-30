@@ -81,7 +81,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
 
     Contexto previo:{contexto}
     Cliente: {mensaje}
-    Respuesta:"""
+    Respuesta(sin saludos innecesarios):"""
     #Si no sabes, di: "No tengo esa información, un asesor te contactará".
     try:
         response = model.generate_content(prompt)
