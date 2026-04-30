@@ -87,16 +87,16 @@ def ejecutar_agente(numero, empresa, mensaje):
     
     elif "replica" in intent:
         respuesta = """En New Sneaker somos Distribuidores Autorizados de todas las marcas que ves en nuestro catálogo (New Athletic, I Run, Ivano, Dariem, entre otras).
-            Esto nos permite garantizarte que:
+        Esto nos permite garantizarte que:
 
-            ✅ Todos nuestros productos son 100% ORIGINALES.
+        ✅ Todos nuestros productos son 100% ORIGINALES.
 
-            ✅ Manejamos los más altos estándares de calidad y durabilidad.
+        ✅ Manejamos los más altos estándares de calidad y durabilidad.
 
-            ✅ No trabajamos con réplicas ni imitaciones; recibirás un producto auténtico de marca.
+        ✅ No trabajamos con réplicas ni imitaciones; recibirás un producto auténtico de marca.
 
-            Puedes visitarnos en nuestras tiendas físicas en San Juan de Dios para comprobar la calidad de los materiales tú mismo. ¡Tu inversión y tu comodidad están aseguradas con nosotros! 🏆
-            Hay algo mas en lo que pueda ayudarte ?"""
+        Puedes visitarnos en nuestras tiendas físicas en San Juan de Dios para comprobar la calidad de los materiales tú mismo. ¡Tu inversión y tu comodidad están aseguradas con nosotros! 🏆
+        Hay algo mas en lo que pueda ayudarte ?"""
 
     elif intent == "queja":
         respuesta = f"Lamentamos lo ocurrido. Un asesor revisará tu caso y te contactará.\n Recuerda que nuestro horario de atención es de Lunes a Viernes de 9:00 AM a 8:00 PM y sabado de 9:00 AM a 8:30 PM."
