@@ -29,33 +29,20 @@ def clasificar_intencion(mensaje, historial):
         context += f"{h['role']}: {h['content']}\n"
 
     prompt = f"""
-    Clasifica el siguiente mensaje en UNA palabra:
+    Clasifica el mensaje en UNA sola palabra de estas opciones: [saludo, duda, compra, queja, promociones, catalogo, replica].
+
     Reglas:
-    - Si el cliente pregunta por precios, clasificalo como "duda"
-    - Se considera solicitud explícita cuando el cliente usa frases directas como: "quiero agendar", "puedo agendar", "quiero comprar", "cómo compro", etc.(si preguntan por el catalogo categorizalo mejor en catalogo)
-    - Si el cliente únicamente muestra interés, hace preguntas o pide información (por ejemplo: "me interesa", "cuánto cuesta", "cómo funciona"), debes clasificarlo como "duda" y NO asumir intención de agendar o comprar.
+    - "compra": Solo si usa frases directas ("quiero agendar", "puedo agendar", "quiero comprar", "cómo compro", etc.)si preguntan por el catalogo categorizalo mejor en catalogo
+    - "duda": Precios, interés general , informacion ("me interesa","cuánto cuesta","cómo funciona") o funcionamiento.No asumas compra.
+    - "saludo" / "queja": Según contenido evidente.
+    - "promociones": Si pregunta por ofertas o promocion.
+    - "replica": Si pregunta por originalidad/réplica.
+    - "catalogo": Si pide catálogo, zapatillas (dama/varón) o modelos específicos. (a menos que pidan comprar ahi catelogizalo como compra)
     - Nunca infieras intención de compra o agendamiento si no está claramente expresada por el cliente.
-    - Categoriza como promociones si el cliente pregunta por alguna promocion.
-    - Solo si preguntan si es replica o si son originales pon replica.
-    - Si pregunta por zapatillas de dama o varon o alguna zapatila de un tipo ponlo como "catalogo"
 
-    Opciones:
-    - saludo
-    - duda
-    - compra o agendamiento
-    - queja
-    - promociones
-    - catalogo
-    - replica
-
-    Mensaje:
-    {mensaje}
-
-    Historial:
-    {context}
-
-    Respuesta:
-    """
+    Mensaje:{mensaje}
+    Historial:{context}
+    Respuesta:"""
     try:
         response = model.generate_content(prompt)
         return response.text.strip().lower()
@@ -74,40 +61,26 @@ def generar_respuesta_ia(mensaje, empresa, historial):
             contexto += f"assistant: {h['content']}\n"
 
     prompt = f"""
-    Eres un asistente virtual de atención al cliente ,Estilo: amigable y profesional. Use emojis y brinda solo la informacion que te pide el cliente.  
+    Eres un asistente virtual de {empresa['nombre']} atención al cliente,Estilo: amigable,profesional,Usa emojis y brinda solo la informacion que te pide el cliente.  
+    Objetivo: {empresa['objetivo']}
 
-    Tu objetivo es {empresa['objetivo']}.
-
-    Empresa: {empresa['nombre']}
-    Descripción: {empresa['descripcion']}
-    Horario: {empresa['horario']}
-    Ubicación: {empresa['ubicacion']} (arequipa, peru)
-
-    servicios y/o productos:
-    {empresa['marcas_disponibles']} ( todos los que son importados poseen una horma pequeña, recomendamos llevar una talla más de la habitual)
-
-    Conversación previa:
-    {contexto}
-
-    Pagos: (si se aceptan envios sin Sin embargo un asesor se contactara para calcular el precio , pidele su ubicacion y si aceptan a provincioas y a otros departamentos del peru )
-    (indica tambien que el costo de envio es asumido por el cliente)
-    {empresa['pagos']}
-
-    Politicas de cambio y devolución:
-    {empresa['politica_cambios']}
+    DATOS EMPRESA:
+    - Info: {empresa['descripcion']} 
+    - Horario: {empresa['horario']} | Ubicación: {empresa['ubicacion']},arequipa.
+    - Productos: {empresa['marcas_disponibles']} (importados poseen una horma pequeña, recomendamos llevar una talla más de la habitual)
+    - Pagos/Envíos: {empresa['pagos']} Envío a cargo del cliente. Consultar precio con asesor pidiendo ubicación/departamento.
+    - Cambios/devoluciones: {empresa['politica_cambios']}
 
     Reglas:
+    - Responde SOLO lo pedido basándote exclusivamente en el contexto. Responde solo lo que te piden.
+    - Si desconoces algo, di: "No tengo esa información, por favor acércate a nuestra tienda" (da horario/ubicación).
+    - Si piden fotos, ofrece el catálogo (indica que escriban "catalogo").
+    - No asumas intención de compra ni hagas seguimiento comercial proactivo.
     - Si el cliente saluda, responde amablemente y ofrece ayuda
-    - No asumas que quiere comprar
-    - No generes mensajes de seguimiento comercial a menos que el cliente lo indique
-    - No utilices conocimientos externos ni supongas detalles que no estén escritos arriba. Tu respuesta debe estar fundamentada al 100% en el contexto brindado.
-    - Reformula la información de manera natural, clara y atractiva.Responde solo lo que te piden.
-    - Si no sabes, di: "No tengo esa información, por acercate a nuestras tiendas fisicas".(brindas ubicacion y horario)
-    - Cuando te pidan foto pregunta si quieren ver el catalogo (diles que escriban catalogo para verlo)
 
+    Contexto previo:{contexto}
     Cliente: {mensaje}
-    Respuesta:
-    """
+    Respuesta:"""
     #Si no sabes, di: "No tengo esa información, un asesor te contactará".
     try:
         response = model.generate_content(prompt)

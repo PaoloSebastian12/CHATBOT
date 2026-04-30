@@ -164,7 +164,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
         fecha = datetime.datetime.now(zona_horaria)
 
         contexto = " | ".join(
-            h["content"] for h in historial)
+            h["content"] for h in historial[-7:])
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
