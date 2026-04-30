@@ -169,12 +169,16 @@ async def verify(request: Request):
 async def webhook(request: Request, background_tasks: BackgroundTasks):
     try:
         data = await request.json()
-        print("MIRA LO QUE LLEGÓ:", data)
-        if "messages" not in data["entry"][0]["changes"][0]["value"]:
-            return {"status": "ok"}
+        value = data["entry"][0]["changes"][0]["value"]
+        if "messages" not in value:
+            return {"status": "ignored_status"}
+        print("📩 NUEVO MENSAJE RECIBIDO:", value["messages"][0]["text"].get("body"))
+
         message_obj = data["entry"][0]["changes"][0]["value"]["messages"][0]
         mensaje_id = message_obj["id"]
         mensaje_timestamp = int(message_obj.get("timestamp", 0))
+        if (int(time.time()) - mensaje_timestamp) > 500:
+            return {"status": "old_message_ignored"}
         tiempo_actual = int(time.time())
         if (tiempo_actual - mensaje_timestamp) > 400:
             print("⏳ Mensaje viejo detectado (Servidor dormido). Ignorando para evitar respuestas fantasma.")
@@ -184,6 +188,8 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         if message_obj["type"] != "text":
             return {"status": "ignored"}
         mensaje = message_obj["text"]["body"]
+        if message_obj["type"] != "text":
+            return {"status": "not_text_ignored"}
 
         numero_empresa = data["entry"][0]["changes"][0]["value"]["metadata"]["display_phone_number"]
         print(f"Buscando empresa con número: {numero_empresa}")
@@ -202,5 +208,5 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         background_tasks.add_task(procesar_ia_y_enviar, mensaje, empresa, numero_cliente,mensaje_id)
         return {"status": "ok"}
     except Exception as e:
-        print("ERROR:", str(e))
+        print("ERROR WEBHOOK:", str(e))
         return {"status": "error", "message": str(e)}

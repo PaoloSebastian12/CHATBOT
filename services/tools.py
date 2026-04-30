@@ -237,7 +237,7 @@ def send_alert(email,mensaje, empresa, numero,historial):
 
         contexto = ""
 
-        for h in historial[-6:]:  # últimos 6 mensajes
+        for h in historial[-10:]:  # últimos 6 mensajes
             rol = "Cliente" if h["role"] == "user" else "Bot"
             contexto += f"\n{rol}: {h['content']}\n"
 
