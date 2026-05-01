@@ -5,6 +5,8 @@ from services.tools import registrar_lead, send_alert
 import os
 import re
 
+LINK_ASESOR = "https://wa.me/51988225719"
+
 def ejecutar_agente(numero, empresa, mensaje):
     guardar_interaccion(numero, "user", mensaje)
     historial = obtener_historial(numero)
@@ -60,6 +62,7 @@ def ejecutar_agente(numero, empresa, mensaje):
         else:
             respuesta = generar_respuesta_ia(mensaje, empresa, historial)
             if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
+                respuesta += f"\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
                 send_alert(empresa["email"], respuesta, empresa, numero, historial)
                 seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
                 cambiar_modo(numero, "HUMANO")
@@ -67,6 +70,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     elif intent == "saludo":
         respuesta = generar_respuesta_ia(mensaje, empresa, historial)
         if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
+            respuesta += f"\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
             send_alert(empresa["email"], respuesta, empresa, numero, historial)
             seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
             cambiar_modo(numero, "HUMANO")
@@ -74,7 +78,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     elif any(x in intent for x in ["compra", "agendamiento"]):
         registrar_lead(numero, mensaje, empresa,historial)
         send_alert( empresa["email"],mensaje,empresa,numero,historial)
-        respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida."
+        respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
         cambiar_modo(numero, "HUMANO")
         
     
@@ -106,6 +110,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     else:
         respuesta = generar_respuesta_ia(mensaje, empresa, historial)
         if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
+            respuesta += f"📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
             send_alert(empresa["email"], respuesta, empresa, numero, historial)
             seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
             cambiar_modo(numero, "HUMANO")
