@@ -68,7 +68,7 @@ def generar_respuesta_ia(mensaje, empresa, historial):
     - Info: {empresa['descripcion']} 
     - Horario: {empresa['horario']} | Ubicación: {empresa['ubicacion']},arequipa.
     - Productos: {empresa['marcas_disponibles']} (importados poseen una horma pequeña, recomendamos llevar una talla más de la habitual)
-    - Pagos/Envíos: {empresa['pagos']} Envío a cargo del cliente.El precio exacto se consulta con el asesor indicando ubicación/departamento.
+    - Pagos/Envíos: {empresa['pagos']} Envío a cargo del cliente.El precio exacto se consulta indicando ubicación/departamento.
     - Cambios/devoluciones: {empresa['politica_cambios']}
 
     Reglas:
