@@ -62,7 +62,7 @@ def ejecutar_agente(numero, empresa, mensaje):
         else:
             respuesta = generar_respuesta_ia(mensaje, empresa, historial)
             if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
-                respuesta += f"\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
+                respuesta += f"\n\nPara continuar con tu atención, por favor haz clic en el siguiente enlace y escríbenos directamente por WhatsApp:{LINK_ASESOR}"
                 send_alert(empresa["email"], respuesta, empresa, numero, historial)
                 seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
                 cambiar_modo(numero, "HUMANO")
@@ -70,7 +70,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     elif intent == "saludo":
         respuesta = generar_respuesta_ia(mensaje, empresa, historial)
         if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
-            respuesta += f"\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
+            respuesta += f"\n\nPara continuar con tu atención, por favor haz clic en el siguiente enlace y escríbenos directamente por WhatsApp:{LINK_ASESOR}"
             send_alert(empresa["email"], respuesta, empresa, numero, historial)
             seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
             cambiar_modo(numero, "HUMANO")
@@ -100,7 +100,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     else:
         respuesta = generar_respuesta_ia(mensaje, empresa, historial)
         if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
-            respuesta += f"📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
+            respuesta += f"\n\nPara continuar con tu atención, por favor haz clic en el siguiente enlace y escríbenos directamente por WhatsApp:{LINK_ASESOR}"
             send_alert(empresa["email"], respuesta, empresa, numero, historial)
             seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
             cambiar_modo(numero, "HUMANO")
