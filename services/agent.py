@@ -78,7 +78,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     elif any(x in intent for x in ["compra", "agendamiento"]):
         registrar_lead(numero, mensaje, empresa,historial)
         send_alert( empresa["email"],mensaje,empresa,numero,historial)
-        respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida\n\n📲 Contacto directo con nuestro asesor:{LINK_ASESOR}"
+        respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida\n\nPara continuar con tu atención, por favor haz clic en el siguiente enlace y escríbenos directamente por WhatsApp:{LINK_ASESOR}"
         cambiar_modo(numero, "HUMANO")
         
     
