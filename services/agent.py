@@ -76,7 +76,7 @@ def ejecutar_agente(numero, empresa, mensaje):
             cambiar_modo(numero, "HUMANO")
             
     elif any(x in intent for x in ["compra", "agendamiento"]):
-        registrar_lead(numero, mensaje, empresa,historial)
+        registrar_lead(numero, mensaje, empresa,historial, intent=intent)
         send_alert( empresa["email"],mensaje,empresa,numero,historial)
         respuesta = f"¡Perfecto! Ya registramos tu solicitud. Un asesor te contactará enseguida\n\nPara continuar con tu atención, por favor haz clic en el siguiente enlace y escríbenos directamente por WhatsApp:{LINK_ASESOR}"
         cambiar_modo(numero, "HUMANO")
@@ -84,8 +84,8 @@ def ejecutar_agente(numero, empresa, mensaje):
     
     elif "catalogo" in intent:
         respuesta = "✨ Con gusto te comparto nuestro catálogo. Manejamos las mejores marcas: New Athletic, Irun, Walon (solo fútbol), Dariems y Dromedar (solo urbana caña alta), todas importadas; además de Ivano, que es cuero nacional. 🇵🇪\n¿En qué categoría estás interesado?\n* 👠 Dama\n* 👟 Varón\n* 👧 Niño\n* ⚽ Fútbol\nTips de tallas:\n* 🌍 Importadas: La horma es pequeña.\n* 🇵🇪 Ivano: Cuero nacional de horma completa."
-        registrar_lead(numero, mensaje, empresa, historial)
         cambiar_modo(numero, "CATALOGO")
+
     elif "promociones" in intent:
         respuesta = "¡Hola! 👋 Por ahora no tenemos promociones activas, pero ¡mantente alerta! 🚨 Ya estamos alistando los mejores modelos y sorpresas para celebrar el Día del Trabajo. 👷‍♂️👟\n¡Se viene un drop increíble que no querrás perderte! 🔥\n¿Hay algo más en lo que pueda ayudarte hoy? 😊"
     
@@ -96,7 +96,9 @@ def ejecutar_agente(numero, empresa, mensaje):
         respuesta = f"Lamentamos lo ocurrido. Un asesor revisará tu caso y te contactará.\n Recuerda que nuestro horario de atención es de Lunes a Viernes de 9:00 AM a 8:00 PM y sabado de 9:00 AM a 8:30 PM."
         send_alert(empresa["email"], respuesta, empresa, numero, historial)
         cambiar_modo(numero, "HUMANO")
-
+    elif intent == "cierre":
+        respuesta = generar_respuesta_ia(mensaje, empresa, historial)
+        registrar_lead(numero, mensaje, empresa,historial,intent=intent)
     else:
         respuesta = generar_respuesta_ia(mensaje, empresa, historial)
         if "asesor" in respuesta.lower() or "contactará" in respuesta.lower():
@@ -105,7 +107,7 @@ def ejecutar_agente(numero, empresa, mensaje):
             seguimiento_asesor(numero, mensaje,respuesta, empresa, historial)
             cambiar_modo(numero, "HUMANO")
         if "agendar" in respuesta or "comprar" in respuesta:
-            registrar_lead(numero, mensaje, empresa, historial)
+            registrar_lead(numero, mensaje, empresa, historial, intent=intent)
             cambiar_modo(numero, "HUMANO")
 
     guardar_interaccion(numero, "assistant", respuesta)

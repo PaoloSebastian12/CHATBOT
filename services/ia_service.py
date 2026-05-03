@@ -29,7 +29,7 @@ def clasificar_intencion(mensaje, historial):
         context += f"{h['role']}: {h['content']}\n"
 
     prompt = f"""
-    Clasifica el mensaje en UNA sola palabra de estas opciones: [saludo, duda, compra, queja, promociones, catalogo, replica].
+    Clasifica el mensaje en UNA sola palabra de estas opciones: [saludo, duda, compra, queja, promociones, catalogo, replica,cierre].
 
     Reglas:
     - "compra": Solo si usa frases directas ("quiero agendar", "puedo agendar", "quiero comprar", "cómo compro", etc.)si preguntan por el catalogo categorizalo mejor en catalogo
@@ -39,6 +39,7 @@ def clasificar_intencion(mensaje, historial):
     - "replica": Si pregunta por originalidad/réplica.
     - "catalogo": Si pide catálogo, zapatillas (dama/varón) o modelos específicos. (a menos que pidan comprar ahi catelogizalo como compra)
     - Nunca infieras intención de compra o agendamiento si no está claramente expresada por el cliente.
+    - "cierre": Si el cliente esta satisfecho y se despide o da por concluida la conversación.
 
     Mensaje:{mensaje}
     Historial:{context}

@@ -157,7 +157,7 @@ def identificar_servicio(historial,empresa):
     categoria_favorita = conteo.most_common(1)[0][0]
     return categoria_favorita
 
-def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
+def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
     try:
         sheet = iniciar_google()
 
@@ -185,6 +185,15 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
         print("Fila encontrada:", fila_existente)
         print("Número recibido:", numero)
 
+        if intent == "cierre":
+            estado = "Resuelto por bot"
+            print(f"✅ CIERRE: Cliente satisfecho")
+        elif fila_existente is not None:
+            estado = "Resuelto por bot"
+        else:
+            estado = "Pendiente Asesor"
+            print(f"📝 NUEVO: En espera de asesor")
+
         if fila_existente:
 
             sheet.update(f"D{fila_existente}:N{fila_existente}",[[
@@ -194,7 +203,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "Actualizado",
+                estado,
                 pais,
                 dia_semana,                  
                 turno,                       
@@ -215,7 +224,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO"):
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "Pendiente",
+                estado,
                 pais,
                 dia_semana,                  
                 turno,                       
@@ -310,7 +319,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
         
         print("Fila encontrada:", fila_existente)
         print("Número recibido:", numero)
-
+        
         if fila_existente:
 
             sheet.update(f"D{fila_existente}:N{fila_existente}",[[
@@ -320,7 +329,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "HABLADO CON ASESOR",
+                "Pendiente Asesor",
                 pais,
                 dia_semana,                  
                 turno,                       
@@ -341,7 +350,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
                 fecha.strftime("%H:%M"),
-                "HABLADO CON ASESOR",
+                "Pendiente Asesor",
                 pais,
                 dia_semana,                  
                 turno,                       
@@ -354,4 +363,3 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
 
     except Exception as e:
         print("❌ Error lead:", e)
-
