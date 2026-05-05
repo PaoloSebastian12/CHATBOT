@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel Asesor</title>
+</head>
+<body>
+
+<h2>Chats</h2>
+<div id="chats"></div>
+
+<h3>Responder</h3>
+<input id="numero" placeholder="Número"><br><br>
+<textarea id="mensaje" placeholder="Mensaje"></textarea><br><br>
+<button onclick="enviar()">Enviar</button>
+
+<script>
+async function cargarChats() {
+    const res = await fetch('/chats');
+    const data = await res.json();
+
+    let html = '';
+    data.forEach(chat => {
+        html += `<p><b>${chat.numero}</b>: ${chat.mensaje} (${chat.estado})</p>`;
+    });
+
+    document.getElementById('chats').innerHTML = html;
+}
+
+async function enviar() {
+    const numero = document.getElementById('numero').value;
+    const mensaje = document.getElementById('mensaje').value;
+
+    await fetch('/responder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero, mensaje })
+    });
+
+    alert("Mensaje enviado");
+}
+
+cargarChats();
+</script>
+
+</body>
+</html>
