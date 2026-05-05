@@ -11,7 +11,7 @@ MAX_USERS = 1000
 MAX_MENSAJES = 10  # cantidad de mensajes por usuario
 
 TTL_AUTO = 120
-TTL_HUMANO = 15 #600
+TTL_HUMANO = 600 
 
 def obtener_modo(numero):
     if numero not in memory_store:
@@ -64,7 +64,7 @@ def guardar_interaccion(numero, role, mensaje):
             "role": role,
             "content": mensaje
         })
-        print("a data es :", data)
+        print("Guardando interaccion:", data)
         data["last_update"] = time.time()
 
 def obtener_historial(numero):
@@ -77,7 +77,6 @@ def obtener_historial(numero):
         if time.time() - data["last_update"] > EXPIRATION_TIME:
             del memory_store[numero]
             return []
-        print("obtener_historial data es :", data["historial"])
         return list(data["historial"])
 
 

@@ -44,8 +44,6 @@ async def enviar_documento(numero_cliente, url_documento, nombre_archivo,texto="
             r = await client.post(url, json=payload, headers=headers)
 
         print("📄 ENVÍO DOCUMENTO:", r.status_code)
-        print("📄 RESPUESTA META:", r.text)
-
     except Exception as e:
         print("❌ Error enviando documento:", str(e))
 
@@ -72,7 +70,6 @@ async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente, message_
     try:
         await marcar_como_leido(message_id)
         print(f"\n🤖 Procesando IA para {numero_cliente}...\n")
-        print(f"\n✅ Mensaje del cliente: {mensaje_limpio}\n")
         # Ejecutamos la IA en un hilo separado para que no bloquee el servidor
         respuesta = await asyncio.to_thread(answer, mensaje_limpio, empresa, numero_cliente)
         print(f"\n✅ Respuesta IA: {respuesta}\n")
@@ -139,7 +136,6 @@ async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente, message_
         
         async with httpx.AsyncClient() as client:
             r = await client.post(url, json=payload, headers=headers)
-            print("ESTADO ENVÍO META:", r.status_code)
             print("RESPUESTA META:", r.text)
 
     except Exception as e:
@@ -160,7 +156,7 @@ async def verify(request: Request):
     challenge = params.get("hub.challenge")
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
-        print("WEBHOOK_VERIFIED")
+        print("\n✅ WEBHOOK_VERIFIED\n")
         return Response(content=challenge, media_type="text/plain")
 
     return Response(content="Token inválido", status_code=403)
@@ -172,7 +168,6 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         value = data["entry"][0]["changes"][0]["value"]
         if "messages" not in value:
             return {"status": "ignored_status"}
-        print("📩 NUEVO MENSAJE RECIBIDO:", value["messages"][0]["text"].get("body"))
 
         message_obj = data["entry"][0]["changes"][0]["value"]["messages"][0]
         mensaje_id = message_obj["id"]
@@ -199,10 +194,8 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
             print("❌ No se encontró la empresa. Abortando envío.")
             return {"reply": "Empresa no configurada"}
         modo = obtener_modo(numero_cliente)
-        print("NUMERO:", numero_cliente)
-        print("MODO:", modo)
         if modo == "HUMANO":
-            print("👨‍💼 Chat en modo humano. IA bloqueada.")
+            print("\n👨‍💼 Chat en modo humano. IA bloqueada.\n")
             return {"status": "modo humano"}
         mensaje = clean_text(mensaje)
         background_tasks.add_task(procesar_ia_y_enviar, mensaje, empresa, numero_cliente,mensaje_id)

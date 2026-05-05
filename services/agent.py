@@ -8,12 +8,23 @@ import re
 LINK_ASESOR = "https://wa.me/51988225719"
 
 def ejecutar_agente(numero, empresa, mensaje):
+    print(f"\n{'='*70}")
+    print(f"🤖 AGENTE INICIADO")
+    print(f"   ✅ Usuario: {numero}")
+    print(f"   ✅ Empresa: {empresa.get('nombre', '?')}")
+    print(f"   ✅ Mensaje del cliente: {mensaje[:50]}...")
+    print(f"{'='*70}\n")
+    respuesta = None
     guardar_interaccion(numero, "user", mensaje)
     historial = obtener_historial(numero)
+    if not historial:
+            print("⚠️  ADVERTENCIA: Historial vacío (usuario nuevo)")
+            historial = []
     print(f"\n📜 Historial dentro de ejecutar_agente {numero}:\n{historial}\n")
 
     intent = clasificar_intencion(mensaje, historial)
     modo = obtener_modo(numero)
+    print(f"🔄 Modo: {modo}\n")
     if modo == "CATALOGO":
         msg = mensaje.lower().strip()
         ruta_varon = "static/catalogo_hombre.pdf"
@@ -56,7 +67,6 @@ def ejecutar_agente(numero, empresa, mensaje):
                 registrar_lead(numero, mensaje, empresa, historial, intent="catalogo")
             return respuesta
            
-    print("\nINTENT:", intent,"\n")
 
     if intent == "duda":
         if re.search(r'\b(por mayor|al por mayor|mayorista|precio(s)? por mayor|venta(s)? por mayor)\b', mensaje.lower().strip()):
@@ -113,7 +123,7 @@ def ejecutar_agente(numero, empresa, mensaje):
         if "agendar" in respuesta or "comprar" in respuesta:
             registrar_lead(numero, mensaje, empresa, historial, intent=intent)
             cambiar_modo(numero, "HUMANO")
-
+    print("\nINTENT:", intent,"\n")
     guardar_interaccion(numero, "assistant", respuesta)
     return respuesta
   

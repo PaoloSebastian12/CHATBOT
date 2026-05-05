@@ -158,13 +158,16 @@ def identificar_servicio(historial,empresa):
     return categoria_favorita
 
 def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
+    print("Ejecutando registro de lead...")
     try:
         sheet = iniciar_google()
 
         fecha = datetime.datetime.now(zona_horaria)
 
-        contexto = " | ".join(
-            h["content"] for h in historial[-7:])
+        contexto = ""
+        for h in historial[-10:]:
+            rol = "Cliente" if h["role"] == "user" else "Bot"
+            contexto += f"\n{rol}: {h['content']}\n"
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
@@ -183,8 +186,6 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
                 break
         
         print("Fila encontrada:", fila_existente)
-        print("Número recibido:", numero)
-
         if intent == "cierre":
             estado = "Resuelto por bot"
             print(f"✅ CIERRE: Cliente satisfecho")
@@ -246,7 +247,7 @@ def send_alert(email,mensaje, empresa, numero,historial):
 
         contexto = ""
 
-        for h in historial[-10:]:  # últimos 6 mensajes
+        for h in historial[-10:]:  # últimos 10 mensajes
             rol = "Cliente" if h["role"] == "user" else "Bot"
             contexto += f"\n{rol}: {h['content']}\n"
 
@@ -284,7 +285,6 @@ def actualizar_sheet(numero, nuevo_modo):
                 sheet.update_cell(i, 2, nuevo_modo)
                 print(f"✅ {numero} cambiado a {nuevo_modo}")
                 return True
-        print("⚠️ Número no existe aún. No se actualizó modo.")
         return False
 
     except Exception as e:
@@ -292,14 +292,17 @@ def actualizar_sheet(numero, nuevo_modo):
         return False
     
 def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"):
+    print("Ejecutando seguimiento asesor...")
     try:
         sheet = iniciar_google()
 
         fecha = datetime.datetime.now(zona_horaria)
 
-        ultimos = [h["content"] for h in historial]
-        ultimos.append(f"BOT: {respuesta}")
-        contexto = " | ".join(ultimos)
+        contexto = ""
+        for h in historial[-10:]:
+            rol = "Cliente" if h["role"] == "user" else "Bot"
+            contexto += f"\n{rol}: {h['content']}\n"
+        contexto += f"Bot: {respuesta}\n"   
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
@@ -318,7 +321,6 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 break
         
         print("Fila encontrada:", fila_existente)
-        print("Número recibido:", numero)
         
         if fila_existente:
 
