@@ -12,7 +12,7 @@ def ejecutar_agente(numero, empresa, mensaje):
     print(f"🤖 AGENTE INICIADO")
     print(f"   ✅ Usuario: {numero}")
     print(f"   ✅ Empresa: {empresa.get('nombre', '?')}")
-    print(f"   ✅ Mensaje del cliente: {mensaje[:50]}...")
+    print(f"   ✅ Mensaje del cliente: {mensaje[:50]}")
     print(f"{'='*70}\n")
     respuesta = None
     guardar_interaccion(numero, "user", mensaje)

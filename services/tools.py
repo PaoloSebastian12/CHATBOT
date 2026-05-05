@@ -187,10 +187,10 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
         
         print("Fila encontrada:", fila_existente)
         if intent == "cierre":
-            estado = "Resuelto por bot"
+            estado = "Atendido por el bot"
             print(f"✅ CIERRE: Cliente satisfecho")
         elif fila_existente is not None:
-            estado = "Resuelto por bot"
+            estado = "Atendido por el bot"
         else:
             estado = "Pendiente Asesor"
             print(f"📝 NUEVO: En espera de asesor")

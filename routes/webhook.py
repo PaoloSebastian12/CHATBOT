@@ -20,6 +20,30 @@ VERSION = "v25.0"
 
 router = APIRouter()
 
+async def enviar_texto(numero_cliente, mensaje):
+    try:
+        url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
+
+        headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": numero_cliente,
+            "type": "text",
+            "text": {"body": mensaje}
+        }
+
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url, json=payload, headers=headers)
+
+        print("RESPUESTA META:", r.text)
+
+    except Exception as e:
+        print("❌ Error enviando texto:", str(e))
+
 async def enviar_documento(numero_cliente, url_documento, nombre_archivo,texto=""):
     try:
         url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
@@ -122,21 +146,7 @@ async def procesar_ia_y_enviar(mensaje_limpio, empresa, numero_cliente, message_
                 "👟 Te compartimos nuestro catálogo con las actualizaciones mas recientes.\n 🔥 Recuerda que renovamos nuestrostock casi a diario , por lo que te recomendamos visitarnos en nuestra tienda fisica.🎯  Alli encontraras promociones unicas! "
             )
             return
-        url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
-        headers = {
-            "Authorization": f"Bearer {ACCESS_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "messaging_product": "whatsapp",
-            "to": numero_cliente,
-            "type": "text",
-            "text": {"body": respuesta}
-        }
-        
-        async with httpx.AsyncClient() as client:
-            r = await client.post(url, json=payload, headers=headers)
-            print("RESPUESTA META:", r.text)
+        await enviar_texto(numero_cliente, respuesta)
 
     except Exception as e:
         print(f"❌ Error en el proceso de fondo: {str(e)}")
