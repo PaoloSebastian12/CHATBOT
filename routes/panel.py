@@ -1,4 +1,3 @@
-
 import os
 import logging
 from fastapi import APIRouter, HTTPException
@@ -6,21 +5,17 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from datetime import datetime
  
-# Importar servicios
 try:
-    from services.tools import iniciar_google
-    from services.memory import cambiar_modo, guardar_interaccion, obtener_historial
+    from services.tools import iniciar_google, registrar_lead, actualizar_sheet
+    from services.memory import cambiar_modo, guardar_interaccion, obtener_historial, obtener_estadisticas
     from routes.webhook import enviar_texto
     IMPORTS_OK = True
 except Exception as e:
-    print(f"⚠️  Error importando servicios: {e}")
+    print(f"⚠️  Error importando: {e}")
     IMPORTS_OK = False
  
 # ===== SETUP LOGGING =====
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - PANEL - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
  
 # ===== MODELOS =====
@@ -36,79 +31,7 @@ class ModoInput(BaseModel):
 router = APIRouter(prefix="/panel", tags=["Panel Asesor"])
  
  
-# ===== HELPERS =====
-def parsear_historial(historial_texto: str) -> list:
-    """
-    ✅ NUEVO: Parsea el historial en formato texto a lista de mensajes
-    
-    Formatos soportados:
-    - "Cliente: mensaje | Bot: respuesta"
-    - "user: mensaje\nassistant: respuesta"
-    - "Usuario: mensaje Bot: respuesta"
-    """
-    if not historial_texto or historial_texto.strip() == "-":
-        return []
-    
-    mensajes = []
-    
-    # Intentar parsear por diferentes separadores
-    lineas = historial_texto.split('\n')
-    
-    for linea in lineas:
-        linea = linea.strip()
-        if not linea:
-            continue
-        
-        # Formato: "Cliente: texto" o "User: texto"
-        if linea.startswith("Cliente:") or linea.startswith("user:") or linea.startswith("User:"):
-            contenido = linea.split(":", 1)[1].strip()
-            mensajes.append({
-                "role": "user",
-                "content": contenido
-            })
-        # Formato: "Bot: texto" o "Assistant: texto"
-        elif linea.startswith("Bot:") or linea.startswith("assistant:") or linea.startswith("Assistant:"):
-            contenido = linea.split(":", 1)[1].strip()
-            mensajes.append({
-                "role": "assistant",
-                "content": contenido
-            })
-    
-    return mensajes
- 
- 
-def extraer_numeros_disponibles() -> list:
-    """
-    ✅ NUEVO: Extrae todos los números disponibles del sheet
-    Para usar en dropdown/select
-    """
-    try:
-        logger.info("📞 Extrayendo números disponibles...")
-        sheet = iniciar_google()
-        
-        if not sheet:
-            logger.warning("⚠️  Google Sheets no disponible")
-            return []
-        
-        # Obtener todos los registros
-        datos = sheet.get_all_records()
-        
-        numeros = []
-        for row in datos:
-            numero = row.get("Numero", "")
-            if numero and numero not in numeros:  # Sin duplicados
-                numeros.append(numero)
-        
-        logger.info(f"✅ {len(numeros)} números encontrados")
-        return sorted(numeros)
-    
-    except Exception as e:
-        logger.error(f"❌ Error extrayendo números: {e}")
-        return []
- 
- 
-# ===== ENDPOINTS =====
- 
+# ===== ENDPOINT: Panel HTML =====
 @router.get("/", response_class=HTMLResponse)
 async def panel():
     """Retorna la página HTML del panel"""
@@ -116,55 +39,44 @@ async def panel():
         panel_path = os.path.join("templates", "panel.html")
         
         if not os.path.exists(panel_path):
-            logger.error(f"❌ panel.html no encontrado en {panel_path}")
-            return """
-            <html>
-            <body style="font-family: Arial; padding: 20px; background: #f0f0f0;">
-                <h1>❌ Error</h1>
-                <p>No se encontró templates/panel.html</p>
-                <p>Ubicación esperada: {}</p>
-                <hr>
-                <p>Solución:</p>
-                <code>mkdir -p templates && cp panel.html templates/panel.html</code>
-            </body>
-            </html>
-            """.format(panel_path)
+            logger.error(f"❌ Archivo no encontrado: {panel_path}")
+            return "<h1>❌ panel.html no encontrado</h1>"
         
         with open(panel_path, "r", encoding="utf-8") as f:
             logger.info("✅ Panel HTML cargado")
             return f.read()
     
     except Exception as e:
-        logger.error(f"❌ Error cargando panel: {e}")
-        return f"<html><body><h1>Error:</h1><p>{str(e)}</p></body></html>"
+        logger.error(f"❌ Error: {e}")
+        return f"<h1>Error: {e}</h1>"
  
  
+# ===== ENDPOINT: Health Check =====
 @router.get("/health")
 async def health():
-    """Verifica que el panel está funcionando"""
+    """Verifica que el panel funciona"""
     checks = {
         "panel": "✅ Activo",
+        "imports": "✅ OK" if IMPORTS_OK else "❌ Error",
         "timestamp": datetime.now().isoformat(),
     }
     
     try:
         sheet = iniciar_google()
-        if sheet:
-            checks["google_sheets"] = "✅ Conectado"
-        else:
-            checks["google_sheets"] = "❌ No disponible"
+        checks["google_sheets"] = "✅ Conectado"
     except Exception as e:
-        checks["google_sheets"] = f"❌ {str(e)[:50]}"
+        checks["google_sheets"] = f"❌ Error: {str(e)[:50]}"
     
     logger.info(f"🏥 Health: {checks}")
     return checks
  
  
+# ===== ENDPOINT: OBTENER CHATS (Solo Pendiente Asesor) =====
 @router.get("/chats")
 async def obtener_chats():
     """
-    ✅ MEJORADO: Obtiene SOLO chats con estado "Pendiente Asesor"
-    Retorna formato mejorado
+    Obtiene SOLO los chats con estado "Pendiente Asesor"
+    desde Google Sheets
     """
     try:
         logger.info("📊 Obteniendo chats pendientes...")
@@ -175,165 +87,210 @@ async def obtener_chats():
             raise HTTPException(status_code=500, detail="Google Sheets no disponible")
         
         # Obtener todos los registros
-        datos = sheet.get_all_records()
-        logger.info(f"✅ {len(datos)} registros obtenidos de Google Sheets")
+        data = sheet.get_all_records()
+        logger.info(f"✅ {len(data)} registros totales obtenidos")
         
         chats = []
         
-        for i, row in enumerate(datos):
+        # FILTRAR SOLO "Pendiente Asesor"
+        for i, row in enumerate(data):
             try:
-                # ✅ FILTRO: Solo "Pendiente Asesor"
-                estado = row.get("Estado", "")
-                if estado != "Pendiente Asesor":
-                    continue  # Saltar si no es pendiente
+                # Verificar que estado sea "Pendiente Asesor"
+                estado = row.get("Estado", "").strip()
                 
-                numero = row.get("Numero", "")
-                
-                chat = {
-                    "id": i,
-                    "numero": numero,
-                    "mensaje": row.get("Ultimo Mensaje", "-")[:100],  # Truncar
-                    "modo": row.get("Modo", "?"),
-                    "estado": estado,
-                    "hora": row.get("Hora", "-"),
-                    "empresa": row.get("Empresa", "-"),
-                    "servicio": row.get("Servicio", "-"),
-                    "intercambios": row.get("Intercambios", 0),
-                    # ✅ NUEVO: Historial parseado
-                    "historial": parsear_historial(row.get("Historial", ""))
-                }
-                chats.append(chat)
+                if estado == "Pendiente Asesor":  # ✅ FILTRO CRÍTICO
+                    chat = {
+                        "id": i,
+                        "numero": row.get("Numero", "?"),
+                        "mensaje": row.get("Ultimo Mensaje", "-")[:60],
+                        "modo": row.get("Modo", "?"),
+                        "estado": estado,
+                        "hora": row.get("Hora", "-"),
+                        "empresa": row.get("Empresa", "-"),
+                        "servicio": row.get("Servicio", "-"),
+                        "intercambios": row.get("Intercambios", 0),
+                        "historial_raw": row.get("Historial", ""),  # Para mostrar después
+                    }
+                    chats.append(chat)
+                    logger.info(f"   ✅ Chat agregado: {chat['numero']}")
             
             except Exception as e:
                 logger.warning(f"⚠️  Error procesando fila {i}: {e}")
                 continue
         
-        logger.info(f"✅ {len(chats)} chats pendientes procesados")
-        
-        if len(chats) == 0:
-            logger.warning("⚠️  Sin chats pendientes")
+        logger.info(f"✅ {len(chats)} chats PENDIENTES encontrados")
         
         return {
             "status": "ok",
             "count": len(chats),
-            "chats": chats
+            "chats": chats,
+            "mensaje": f"{len(chats)} chats pendientes"
         }
     
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"❌ Error en obtener_chats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
  
  
+# ===== ENDPOINT: OBTENER NÚMEROS (Para dropdown) =====
 @router.get("/numeros")
 async def obtener_numeros():
     """
-    ✅ NUEVO: Retorna lista de números para dropdown/select
+    Obtiene lista de TODOS los números para el dropdown
     """
     try:
-        logger.info("📞 Obteniendo lista de números...")
-        numeros = extraer_numeros_disponibles()
-        
-        return {
-            "status": "ok",
-            "count": len(numeros),
-            "numeros": numeros
-        }
-    
-    except Exception as e:
-        logger.error(f"❌ Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
- 
- 
-@router.get("/chat/{numero}")
-async def ver_chat(numero: str):
-    """
-    ✅ MEJORADO: Obtiene historial completo de un cliente
-    """
-    try:
-        logger.info(f"📝 Obteniendo chat de {numero}...")
+        logger.info("📱 Obteniendo lista de números...")
         
         sheet = iniciar_google()
         if not sheet:
             raise HTTPException(status_code=500, detail="Google Sheets no disponible")
         
-        # Buscar en Google Sheets
-        datos = sheet.get_all_records()
+        data = sheet.get_all_records()
         
-        for row in datos:
-            if str(row.get("Numero", "")).strip() == str(numero).strip():
-                # Parsear historial
-                historial = parsear_historial(row.get("Historial", ""))
-                
-                logger.info(f"✅ {len(historial)} mensajes encontrados para {numero}")
-                
-                return {
+        numeros = []
+        for row in data:
+            numero = row.get("Numero", "").strip()
+            if numero and numero != "":
+                numeros.append({
                     "numero": numero,
-                    "historial": historial,
-                    "count": len(historial),
                     "estado": row.get("Estado", "-"),
-                    "empresa": row.get("Empresa", "-"),
-                    "servicio": row.get("Servicio", "-")
-                }
+                    "nombre": f"{numero} - {row.get('Empresa', '-')}"
+                })
         
-        logger.warning(f"⚠️  Cliente {numero} no encontrado")
-        return {
-            "numero": numero,
-            "historial": [],
-            "count": 0,
-            "mensaje": "Cliente no encontrado"
-        }
+        # Eliminar duplicados
+        numeros_unicos = {n['numero']: n for n in numeros}.values()
+        numeros = list(numeros_unicos)
+        
+        logger.info(f"✅ {len(numeros)} números únicos encontrados")
+        return {"status": "ok", "numeros": numeros}
     
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
  
  
+# ===== ENDPOINT: OBTENER HISTORIAL =====
+@router.get("/chat/{numero}")
+async def ver_chat(numero: str):
+    """
+    Obtiene el historial completo de un usuario
+    Parsea la columna "Historial" de Google Sheets
+    """
+    try:
+        logger.info(f"📝 Obteniendo historial de {numero}...")
+        
+        sheet = iniciar_google()
+        if not sheet:
+            raise HTTPException(status_code=500, detail="Google Sheets no disponible")
+        
+        data = sheet.get_all_records()
+        
+        # Buscar el registro con este número
+        registro = None
+        for row in data:
+            if str(row.get("Numero", "")).strip() == str(numero).strip():
+                registro = row
+                break
+        
+        if not registro:
+            logger.warning(f"⚠️  No encontrado: {numero}")
+            return {
+                "numero": numero,
+                "historial": [],
+                "count": 0,
+                "mensaje": "Usuario no encontrado"
+            }
+        
+        # Extraer historial de la columna "Historial"
+        historial_raw = registro.get("Historial", "")
+        logger.info(f"📋 Historial raw: {historial_raw[:100]}...")
+        
+        # Parsear historial
+        historial = parsear_historial(historial_raw)
+        
+        logger.info(f"✅ {len(historial)} mensajes parseados")
+        
+        return {
+            "numero": numero,
+            "historial": historial,
+            "count": len(historial),
+            "mensaje": f"{len(historial)} mensajes encontrados",
+            "empresa": registro.get("Empresa", "-"),
+            "servicio": registro.get("Servicio", "-"),
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
+# ===== FUNCIÓN: Parsear Historial =====
+def parsear_historial(historial_raw: str):
+    """
+    Parsea el historial desde Google Sheets
+    Formato esperado: "Cliente: msg | Bot: msg | Cliente: msg"
+    
+    Retorna: [{"role": "user", "content": "msg"}, {"role": "assistant", "content": "msg"}]
+    """
+    if not historial_raw or historial_raw.strip() == "":
+        return []
+    
+    historial = []
+    
+    # Dividir por "|"
+    partes = historial_raw.split("|")
+    
+    for parte in partes:
+        parte = parte.strip()
+        
+        # Buscar "Cliente:" o "Bot:"
+        if parte.startswith("Cliente:"):
+            contenido = parte.replace("Cliente:", "").strip()
+            historial.append({
+                "role": "user",
+                "content": contenido
+            })
+        elif parte.startswith("Bot:"):
+            contenido = parte.replace("Bot:", "").strip()
+            historial.append({
+                "role": "assistant",
+                "content": contenido
+            })
+    
+    return historial
+ 
+ 
+# ===== ENDPOINT: Responder =====
 @router.post("/responder")
 async def responder(data: RespuestaInput):
     """
-    ✅ MEJORADO: Envía respuesta y la guarda
+    Envía respuesta al cliente
     """
     numero = data.numero
     mensaje = data.mensaje
     
-    logger.info(f"📨 Respuesta a {numero}: {mensaje[:50]}...")
+    logger.info(f"📨 Respuesta a {numero}")
     
     try:
         # Validar
         if not numero or len(numero) < 7:
             raise ValueError("Número inválido")
         
-        if not mensaje:
+        if not mensaje or len(mensaje) < 1:
             raise ValueError("Mensaje vacío")
         
         # Enviar por WhatsApp
-        logger.info(f"   → Enviando a WhatsApp...")
+        logger.info(f"   → Enviando por WhatsApp...")
         try:
             await enviar_texto(numero, mensaje)
-            logger.info(f"   ✅ Enviado a WhatsApp")
+            logger.info(f"   ✅ WhatsApp OK")
         except Exception as e:
             logger.error(f"   ❌ Error WhatsApp: {e}")
             raise HTTPException(status_code=500, detail=f"Error WhatsApp: {str(e)}")
         
         # Guardar en historial
-        logger.info(f"   → Guardando en historial...")
-        try:
-            guardar_interaccion(numero, "assistant", mensaje)
-            logger.info(f"   ✅ Guardado en historial")
-        except Exception as e:
-            logger.warning(f"   ⚠️  Error historial: {e}")
-        
-        # Cambiar modo a HUMANO (asesor respondiendo)
-        logger.info(f"   → Cambiar modo a HUMANO...")
-        try:
-            cambiar_modo(numero, "HUMANO")
-            logger.info(f"   ✅ Modo HUMANO")
-        except Exception as e:
-            logger.warning(f"   ⚠️  Error modo: {e}")
+        guardar_interaccion(numero, "assistant", mensaje)
+        cambiar_modo(numero, "HUMANO")
         
         logger.info(f"✅ Respuesta enviada a {numero}")
         
@@ -346,25 +303,24 @@ async def responder(data: RespuestaInput):
     except ValueError as e:
         logger.error(f"❌ Validación: {e}")
         raise HTTPException(status_code=400, detail=str(e))
-    
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
  
  
+# ===== ENDPOINT: Cambiar Modo =====
 @router.post("/modo")
 async def cambiar_modo_endpoint(data: ModoInput):
-    """
-    Cambia el modo de un usuario
-    """
+    """Cambia el modo de un usuario"""
     numero = data.numero
     nuevo_modo = data.modo
     
-    logger.info(f"🔄 Cambiando modo de {numero} a {nuevo_modo}...")
+    logger.info(f"🔄 Cambiando modo: {numero} → {nuevo_modo}")
     
     try:
+        actualizar_sheet(numero, nuevo_modo)
         cambiar_modo(numero, nuevo_modo)
-        logger.info(f"✅ Modo: {numero} → {nuevo_modo}")
+        logger.info(f"✅ Modo cambiado")
         
         return {
             "status": "ok",
@@ -377,6 +333,19 @@ async def cambiar_modo_endpoint(data: ModoInput):
         raise HTTPException(status_code=500, detail=str(e))
  
  
+# ===== ENDPOINT: Estadísticas =====
+@router.get("/stats")
+async def stats():
+    """Retorna estadísticas"""
+    try:
+        logger.info("📈 Obteniendo stats...")
+        stats_data = obtener_estadisticas()
+        return {"status": "ok", "stats": stats_data}
+    except Exception as e:
+        logger.error(f"❌ Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+ 
+ 
 if __name__ == "__main__":
     logger.info("🧪 Testing panel.py")
-    logger.info(f"   Imports: {'✅' if IMPORTS_OK else '❌'}")
+ 
