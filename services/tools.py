@@ -167,7 +167,8 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
         contexto = ""
         for h in historial[-10:]:
             rol = "Cliente" if h["role"] == "user" else "Bot"
-            contexto += f"\n{rol}: {h['content']}\n"
+            contexto += f"{rol}: {h['content']} | "
+        contexto = contexto.rstrip(" | ")
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
@@ -301,7 +302,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
         contexto = ""
         for h in historial[-10:]:
             rol = "Cliente" if h["role"] == "user" else "Bot"
-            contexto += f"\n{rol}: {h['content']}\n"
+            contexto += f"{rol}: {h['content']} | " 
         contexto += f"Bot: {respuesta}\n"   
 
         servicios = identificar_servicio(historial, empresa)

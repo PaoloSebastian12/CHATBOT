@@ -564,9 +564,9 @@
         // Actualizar header
         const chat = chatsData.find(c => c.numero === numero);
         if (chat) {
-            document.getElementById('header-numero').textContent = numero;
-            document.getElementById('header-empresa').textContent = `${chat.empresa} - ${chat.servicio}`;
-            document.getElementById('header-modo').textContent = chat.modo;
+            document.getElementById('header-numero').textContent = `📱 ${numero}`;
+            document.getElementById('header-empresa').textContent = `${chat.empresa} • ${chat.modo}`;
+            document.getElementById('header-modo').textContent = chat.servicio;
         }
  
         // Marcar como activo

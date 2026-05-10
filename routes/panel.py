@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
  
 try:
-    from services.tools import iniciar_google, registrar_lead, actualizar_sheet
-    from services.memory import cambiar_modo, guardar_interaccion, obtener_historial
+    from services.tools import iniciar_google, actualizar_sheet
+    from services.memory import cambiar_modo, guardar_interaccion
     from routes.webhook import enviar_texto
     IMPORTS_OK = True
 except Exception as e:
@@ -75,10 +75,6 @@ async def health():
 # ===== ENDPOINT: OBTENER CHATS (Solo Pendiente Asesor) =====
 @router.get("/chats")
 async def obtener_chats():
-    """
-    Obtiene SOLO los chats con estado "Pendiente Asesor"
-    desde Google Sheets
-    """
     try:
         logger.info("📊 Obteniendo chats pendientes...")
         
@@ -99,7 +95,7 @@ async def obtener_chats():
                 # Verificar que estado sea "Pendiente Asesor"
                 estado = row.get("Estado", "").strip()
                 
-                if estado == "Pendiente Asesor":  # ✅ FILTRO CRÍTICO
+                if estado == "Pendiente Asesor":  
                     chat = {
                         "id": i,
                         "numero": row.get("Numero", "?"),
@@ -243,6 +239,8 @@ def parsear_historial(historial_raw: str):
     
     for parte in partes:
         parte = parte.strip()
+        if not parte:
+            continue
         
         # Buscar "Cliente:" o "Bot:"
         if parte.startswith("Cliente:"):
@@ -251,12 +249,14 @@ def parsear_historial(historial_raw: str):
                 "role": "user",
                 "content": contenido
             })
-        elif parte.startswith("Bot:"):
-            contenido = parte.replace("Bot:", "").strip()
+        elif parte.startswith("BOT:"):
+            contenido = parte.replace("BOT:", "").strip()
             historial.append({
                 "role": "assistant",
                 "content": contenido
             })
+        else:
+            historial.append({"role": "user", "content": parte})
     
     return historial
  
