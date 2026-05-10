@@ -1,13 +1,13 @@
 import os
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from datetime import datetime
  
 try:
     from services.tools import iniciar_google, registrar_lead, actualizar_sheet
-    from services.memory import cambiar_modo, guardar_interaccion, obtener_historial, obtener_estadisticas
+    from services.memory import cambiar_modo, guardar_interaccion, obtener_historial
     from routes.webhook import enviar_texto
     IMPORTS_OK = True
 except Exception as e:
@@ -25,7 +25,8 @@ class RespuestaInput(BaseModel):
  
 class ModoInput(BaseModel):
     numero: str = Field(..., min_length=7, max_length=20)
-    modo: str = Field(..., regex="^(AUTO|HUMANO|CATALOGO)$")
+    # ✅ CORREGIDO: regex → pattern (Pydantic v2)
+    modo: str = Field(..., pattern="^(AUTO|HUMANO|CATALOGO)$")
  
 # ===== ROUTER =====
 router = APIRouter(prefix="/panel", tags=["Panel Asesor"])
@@ -109,7 +110,7 @@ async def obtener_chats():
                         "empresa": row.get("Empresa", "-"),
                         "servicio": row.get("Servicio", "-"),
                         "intercambios": row.get("Intercambios", 0),
-                        "historial_raw": row.get("Historial", ""),  # Para mostrar después
+                        "historial_raw": row.get("Historial", ""),
                     }
                     chats.append(chat)
                     logger.info(f"   ✅ Chat agregado: {chat['numero']}")
@@ -333,19 +334,5 @@ async def cambiar_modo_endpoint(data: ModoInput):
         raise HTTPException(status_code=500, detail=str(e))
  
  
-# ===== ENDPOINT: Estadísticas =====
-@router.get("/stats")
-async def stats():
-    """Retorna estadísticas"""
-    try:
-        logger.info("📈 Obteniendo stats...")
-        stats_data = obtener_estadisticas()
-        return {"status": "ok", "stats": stats_data}
-    except Exception as e:
-        logger.error(f"❌ Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
- 
- 
 if __name__ == "__main__":
     logger.info("🧪 Testing panel.py")
- 
