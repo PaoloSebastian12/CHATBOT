@@ -435,7 +435,20 @@
     <div class="chat-list-panel">
         <div class="chat-list-header">
             <h2>💬 Chats Pendientes</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="chat-count" id="chat-count">0</span>
+                <button onclick="cargarChats()" style="
+                    background: #667eea;
+                    color: white;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 600;
+                ">🔄 Refrescar</button>
             <span class="chat-count" id="chat-count">0</span>
+            </div>
         </div>
         <div id="alert-chats" class="alert"></div>
         <div class="chat-list" id="chats">
@@ -462,13 +475,6 @@
  
         <div class="input-area">
             <div id="alert-respuesta" class="alert"></div>
- 
-            <div class="numero-selector">
-                <select id="numero-select" onchange="seleccionarDesdeLista()">
-                    <option value="">-- Seleccionar cliente --</option>
-                </select>
-                <input type="text" id="numero-manual" placeholder="O escribe el número manualmente" />
-            </div>
  
             <div class="mensaje-input">
                 <textarea id="mensaje" placeholder="Escribe tu respuesta aquí..."></textarea>
@@ -557,23 +563,26 @@
     async function abrirChat(numero) {
         console.log(`📝 Abriendo chat de ${numero}...`);
         
-        numeroActual = numero;
-        document.getElementById('numero-manual').value = numero;
-        document.getElementById('numero-select').value = numero;
- 
+        numeroActual = numero; 
         // Actualizar header
+        document.getElementById('header-numero').textContent = `📱 ${numero}`;
+
         const chat = chatsData.find(c => c.numero === numero);
         if (chat) {
-            document.getElementById('header-numero').textContent = `📱 ${numero}`;
             document.getElementById('header-empresa').textContent = `${chat.empresa} • ${chat.modo}`;
             document.getElementById('header-modo').textContent = chat.servicio;
+        } else {
+        document.getElementById('header-empresa').textContent = '-';
+        document.getElementById('header-modo').textContent = '-';
         }
+
  
         // Marcar como activo
         document.querySelectorAll('.chat-item').forEach(item => {
             item.classList.remove('active');
         });
-        event.target.closest('.chat-item').classList.add('active');
+        const activeChat = document.querySelector(`[onclick="abrirChat('${numero}')"]`);
+        if (activeChat) activeChat.closest('.chat-item')?.classList.add('active');
  
         // Cargar historial
         await cargarHistorial(numero);
@@ -603,8 +612,8 @@
             let html = '';
             historial.forEach(msg => {
                 const isUser = msg.role === 'user';
-                const classe = isUser ? 'user' : 'assistant';
-                const avatar = isUser ? '👤' : '🤖';
+                const classe = isUser ? 'assistant' : 'user';
+                const avatar = isUser ? '🤖' : '👤';
  
                 html += `
                     <div class="message ${classe}">
@@ -711,7 +720,7 @@
             document.getElementById('char-count').textContent = '';
  
             // Recargar chats
-            setTimeout(cargarChats, 2000);
+            setTimeout(cargarChats, 3600000);
  
         } catch (error) {
             console.error('❌ Error:', error);
