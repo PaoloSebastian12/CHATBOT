@@ -446,8 +446,7 @@
                     cursor: pointer;
                     font-size: 11px;
                     font-weight: 600;
-                ">🔄 Refrescar</button>
-            <span class="chat-count" id="chat-count">0</span>
+                ">🔄 Refrescar chats</button>
             </div>
         </div>
         <div id="alert-chats" class="alert"></div>
@@ -478,7 +477,38 @@
  
             <div class="mensaje-input">
                 <textarea id="mensaje" placeholder="Escribe tu respuesta aquí..."></textarea>
-                <button class="btn-enviar" onclick="enviarRespuesta()" id="btn-enviar">Enviar</button>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <button class="btn-enviar" onclick="enviarRespuesta()" id="btn-enviar">📤 Enviar</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="enviarImagen()" style="
+                            background: #ff9800;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 11px;
+                        ">🖼️ Imagen</button>
+                        <button onclick="enviarDocumento()" style="
+                            background: #2196f3;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 11px;
+                        ">📄 Documento</button>
+                        <button onclick="enviarUbicacion()" style="
+                            background: #4caf50;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 11px;
+                        ">📍 Ubicación</button>
+                    </div>
+                </div>
             </div>
             <div class="char-count" id="char-count"></div>
         </div>
@@ -490,7 +520,103 @@
     const API_BASE = '';
     let chatsData = [];
     let numeroActual = null;
- 
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.id = 'file-input';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    // ===== ENVIAR IMAGEN =====
+    async function enviarImagen() {
+        if (!numeroActual) {
+            alert('Selecciona un chat primero');
+            return;
+        }
+        fileInput.accept = 'image/*';
+        fileInput.onchange = () => enviarArchivo('imagen');
+        fileInput.click();
+    }
+
+    async function enviarDocumento() {
+        if (!numeroActual) {
+            alert('Selecciona un chat primero');
+            return;
+        }
+        fileInput.accept = '.pdf,.doc,.docx,.txt';
+        fileInput.onchange = () => enviarArchivo('documento');
+        fileInput.click();
+    }
+
+    async function enviarUbicacion() {
+        if (!numeroActual) {
+            alert('Selecciona un chat primero');
+            return;
+        }
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const url = `https://maps.google.com/?q=${lat},${lng}`;
+                
+                const mensaje = `📍 Ubicación: https://maps.google.com/?q=${lat},${lng}`;
+                
+                try {
+                    const response = await fetch(`${API_BASE}/panel/responder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numero: numeroActual, mensaje })
+                    });
+                    
+                    if (response.ok) {
+                        alert('✅ Ubicación enviada');
+                        document.getElementById('mensaje').value = '';
+                        setTimeout(cargarChats, 2000);
+                    }
+                } catch (e) {
+                    alert('❌ Error enviando ubicación');
+                }
+            });
+        } else {
+            alert('❌ Geolocalización no disponible');
+        }
+    }
+
+    async function enviarArchivo(tipo) {
+        const file = fileInput.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+            
+            let mensaje = '';
+            if (tipo === 'imagen') {
+                mensaje = `🖼️ [Imagen enviada: ${file.name}]`;
+            } else if (tipo === 'documento') {
+                mensaje = `📄 [Documento enviado: ${file.name}]`;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/panel/responder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numero: numeroActual, mensaje })
+                });
+                
+                if (response.ok) {
+                    alert(`✅ ${tipo} enviado`);
+                    document.getElementById('mensaje').value = '';
+                    fileInput.value = '';
+                    setTimeout(cargarChats, 2000);
+                }
+            } catch (e) {
+                alert(`❌ Error enviando ${tipo}`);
+            }
+        };
+        
+        reader.readAsDataURL(file);
+    }
     // ===== CARGAR CHATS =====
     async function cargarChats() {
         const alertDiv = document.getElementById('alert-chats');
@@ -563,9 +689,9 @@
     async function abrirChat(numero) {
         console.log(`📝 Abriendo chat de ${numero}...`);
         
-        numeroActual = numero; 
+        numeroActual = String(numero); 
         // Actualizar header
-        document.getElementById('header-numero').textContent = `📱 ${numero}`;
+        document.getElementById('header-numero').textContent = `Chat selecionado : 📱 ${numero}`;
 
         const chat = chatsData.find(c => c.numero === numero);
         if (chat) {
