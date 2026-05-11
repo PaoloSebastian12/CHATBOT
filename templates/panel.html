@@ -526,6 +526,9 @@
     fileInput.id = 'file-input';
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
+    modoActualChat = "AUTO"; 
+    let autoRefreshInterval = null;
+
     // ===== ENVIAR IMAGEN =====
     async function enviarImagen() {
         if (!numeroActual) {
@@ -697,6 +700,15 @@
         if (chat) {
             document.getElementById('header-empresa').textContent = `${chat.empresa} • ${chat.modo}`;
             document.getElementById('header-modo').textContent = chat.servicio;
+            modoActualChat = chat.modo;
+            if (chat.modo === "HUMANO") {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+                autoRefreshInterval = setInterval(() => {
+                    cargarHistorial(numero);
+                }, 5000);  // Cada 5 segundos
+            } else {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            }
         } else {
         document.getElementById('header-empresa').textContent = '-';
         document.getElementById('header-modo').textContent = '-';
@@ -717,7 +729,10 @@
     // ===== CARGAR HISTORIAL =====
     async function cargarHistorial(numero) {
         const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando historial...</div>';
+        if (messagesDiv.innerHTML === '') {
+            messagesDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando...</div>';
+        }
+
  
         try {
             console.log(`📋 Obteniendo historial de ${numero}...`);
@@ -739,7 +754,7 @@
             historial.forEach(msg => {
                 const isUser = msg.role === 'user';
                 const classe = isUser ? 'assistant' : 'user';
-                const avatar = isUser ? '🤖' : '👤';
+                const avatar = isUser ? 'IA/Usted' : 'Cliente';
  
                 html += `
                     <div class="message ${classe}">

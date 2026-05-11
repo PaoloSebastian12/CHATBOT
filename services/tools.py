@@ -163,12 +163,22 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
         sheet = iniciar_google()
 
         fecha = datetime.datetime.now(zona_horaria)
+        
+        try:
+            # Leer historial actual
+            historial_actual = sheet.cell(fila_existente, 5).value or ""  # Columna E (5)
+            
+            nuevo_registro = f"Cliente: {mensaje}"
+            
+            # Sumar
+            if historial_actual:
+                contexto_final = historial_actual + " | " + nuevo_registro
+            else:
+                contexto_final = nuevo_registro
 
-        contexto = ""
-        for h in historial[-10:]:
-            rol = "Cliente" if h["role"] == "user" else "Bot"
-            contexto += f"{rol}: {h['content']} | "
-        contexto = contexto.rstrip(" | ")
+            
+        except Exception as e:
+            print(f"⚠️  Error actualizando: {e}")
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
@@ -200,7 +210,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
 
             sheet.update(f"D{fila_existente}:N{fila_existente}",[[
                 mensaje,
-                contexto,
+                contexto_final,
                 servicios,
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
@@ -221,7 +231,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
                 modo,
                 numero,
                 mensaje,
-                contexto,
+                contexto_final,
                 servicios,
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
@@ -299,11 +309,21 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
 
         fecha = datetime.datetime.now(zona_horaria)
 
-        contexto = ""
-        for h in historial[-10:]:
-            rol = "Cliente" if h["role"] == "user" else "Bot"
-            contexto += f"{rol}: {h['content']} | " 
-        contexto += f"Bot: {respuesta}\n"   
+        try:
+            # Leer historial actual
+            historial_actual = sheet.cell(fila_existente, 5).value or ""  # Columna E (5)
+            
+            nuevo_registro = f"Cliente: {mensaje}"
+            
+            # Sumar
+            if historial_actual:
+                contexto_final = historial_actual + " | " + nuevo_registro
+            else:
+                contexto_final = nuevo_registro
+
+            
+        except Exception as e:
+            print(f"⚠️  Error actualizando: {e}") 
 
         servicios = identificar_servicio(historial, empresa)
         pais = extraer_pais(numero)
@@ -327,7 +347,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
 
             sheet.update(f"D{fila_existente}:N{fila_existente}",[[
                 mensaje,
-                contexto,
+                contexto_final,
                 servicios,
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),
@@ -348,7 +368,7 @@ def seguimiento_asesor(numero, mensaje,respuesta, empresa,historial, modo="AUTO"
                 modo,
                 numero,
                 mensaje,
-                contexto,
+                contexto_final,
                 servicios,
                 empresa["nombre"],
                 fecha.strftime("%d-%m-%Y"),

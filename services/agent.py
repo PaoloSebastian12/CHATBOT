@@ -1,7 +1,7 @@
 from services.ia_service import clasificar_intencion, generar_respuesta_ia
 from services.tools import registrar_lead, seguimiento_asesor
 from services.memory import cambiar_modo, guardar_interaccion, obtener_historial, obtener_modo
-from services.tools import registrar_lead, send_alert
+from services.tools import registrar_lead, send_alert, iniciar_google
 import os
 import re
 
@@ -15,8 +15,32 @@ def ejecutar_agente(numero, empresa, mensaje):
     print(f"   ✅ Mensaje del cliente: {mensaje[:50]}")
     print(f"{'='*70}\n")
     respuesta = None
-    guardar_interaccion(numero, "user", mensaje)
     historial = obtener_historial(numero)
+    # Crear contexto
+    contexto = ""
+    for h in historial[-20:]:
+        rol = "Cliente" if h["role"] == "user" else "BOT"
+        contexto += f"{rol}: {h['content']} | "
+    contexto += f"BOT: {respuesta}"
+    guardar_interaccion(numero, "user", mensaje)
+    try:
+        sheet = iniciar_google()
+        columna_numeros = sheet.col_values(3)
+        
+        for i, valor in enumerate(columna_numeros[1:], start=2):
+            if str(valor).strip() == str(numero):
+                # Leer y sumar
+                historial_actual = sheet.cell(i, 5).value or ""
+                if historial_actual:
+                    contexto_final = historial_actual + " | " + f"Bot: {respuesta}"
+                else:
+                    contexto_final = f"Bot: {respuesta}"
+                
+                # Guardar
+                sheet.update_cell(i, 5, contexto_final)
+                break
+    except Exception as e:
+        print(f"⚠️  Error: {e}")
     if not historial:
             print("⚠️  ADVERTENCIA: Historial vacío (usuario nuevo)")
             historial = []
