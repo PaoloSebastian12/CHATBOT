@@ -2,6 +2,7 @@ import base64
 import datetime
 from email.mime.text import MIMEText
 import os
+import threading
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from thefuzz import fuzz
@@ -14,6 +15,100 @@ from collections import Counter
 client = None
 sheet_leads = None
 zona_horaria = pytz.timezone('America/Lima')
+
+class CacheSheetsManager:
+    def __init__(self, ttl_segundos=30):
+        self.client = None
+        self.sheet_leads = None
+        self.cache_datos = None
+        self.cache_timestamp = None
+        self.ttl = ttl_segundos
+        self.lock = threading.Lock()
+    def is_cache_valido(self):
+        """Verifica si el caché sigue siendo válido"""
+        if not self.cache_timestamp:
+            return False
+        edad = (datetime.datetime.now() - self.cache_timestamp).total_seconds()
+        return edad < self.ttl
+    def iniciar_google(self):
+        with self.lock:
+            if self.sheet_leads:
+                return self.sheet_leads
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ]
+
+        google_info = json.loads(os.getenv("GOOGLE_SHEETS_JSON"))
+
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(
+            google_info, scope
+        )
+
+        self.client = gspread.authorize(creds)
+
+        archivo = self.client.open("Leads")
+
+        try:
+            self.sheet_leads = archivo.worksheet("Leads")
+        except:
+            self.sheet_leads = archivo.sheet1
+        
+        headers = [
+        "ID",
+        "Modo",
+        "Numero",
+        "Ultimo Mensaje",
+        "Historial",
+        "Servicio",
+        "Empresa",
+        "Dia",
+        "Hora",
+        "Estado",
+        "Pais",
+        "Dia_Semana",
+        "Turno",
+        "Intercambios"]
+
+        fila1 = self.sheet_leads.row_values(1)
+        if not fila1:
+            self.sheet_leads.append_row(headers)
+
+        return self.sheet_leads
+    def obtener_todos_datos(self):
+        """
+        ✅ UNA sola llamada a Google por 30 segundos
+        ✅ Las otras usa caché
+        """
+        if self.is_cache_valido():
+            print("⚡ Usando CACHÉ (sin llamar a Google)")
+            return self.cache_datos
+        
+        try:
+            sheet = self.iniciar_google()
+            if not sheet:
+                return []
+            
+            print("📥 Llamando a Google Sheets (primera vez o caché expirado)")
+            self.cache_datos = sheet.get_all_records()
+            self.cache_timestamp = datetime.datetime.now()
+            
+            return self.cache_datos
+        
+        except Exception as e:
+            print(f"❌ Error obteniendo datos: {e}")
+            return []
+    
+    def invalidar_cache(self):
+        """Limpia el caché cuando hay cambios"""
+        self.cache_timestamp = None
+        print("🔄 Caché invalidado")
+
+cache_manager = CacheSheetsManager(ttl_segundos=30)
+
+def iniciar_google():
+    """Función compatible - usa caché"""
+    return cache_manager.iniciar_google()
 
 def extraer_dia_semana(fecha) -> str:
     dias = {
@@ -66,69 +161,31 @@ def extraer_pais(numero: str) -> str:
             return prefijos[clave]
     return "Desconocido"
 
-def iniciar_google():
-    global client, sheet_leads
-
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-
-    google_info = json.loads(os.getenv("GOOGLE_SHEETS_JSON"))
-
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(
-        google_info, scope
-    )
-
-    client = gspread.authorize(creds)
-
-    archivo = client.open("Leads")
-
-    try:
-        sheet_leads = archivo.worksheet("Leads")
-    except:
-        sheet_leads = archivo.sheet1
+def buscar_cliente_en_cache(numero):
+    """
+    ✅ Busca cliente EN CACHÉ sin llamar a Google
+    ✅ Si no está, retorna None
+    """
+    datos = cache_manager.obtener_todos_datos()
     
-    headers = [
-    "ID",
-    "Modo",
-    "Numero",
-    "Ultimo Mensaje",
-    "Historial",
-    "Servicio",
-    "Empresa",
-    "Dia",
-    "Hora",
-    "Estado",
-    "Pais",
-    "Dia_Semana",
-    "Turno",
-    "Intercambios"]
-
-    fila1 = sheet_leads.row_values(1)
-
-    if not fila1:
-        sheet_leads.append_row(headers)
-    if sheet_leads:
-        return sheet_leads
-
-
-    return sheet_leads
+    for fila_idx, row in enumerate(datos):
+        if str(row.get("Numero", "")).strip() == str(numero).strip():
+            return {
+                "fila": fila_idx + 2,  # +2 por header + indexación
+                "datos": row
+            }
+    
+    return None
 
 def buscar_modo_en_sheet(numero):
     try:
-        sheet = iniciar_google()
-        columna_numeros = sheet.col_values(3)
-
-        for i, valor in enumerate(columna_numeros[1:], start=2):
-            if str(valor).strip() == str(numero):
-                modo = sheet.cell(i, 2).value
-                return modo if modo else "AUTO"
-
+        cliente = buscar_cliente_en_cache(numero)
+        if cliente:
+            modo = cliente["datos"].get("Modo", "AUTO")
+            return modo if modo else "AUTO"
         return "AUTO"
-
     except Exception as e:
-        print("❌ Error buscando modo:", e)
+        print(f"❌ Error buscando modo: {e}")
         return "AUTO"
 
 def identificar_servicio(historial,empresa):
@@ -161,22 +218,24 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
     print("Ejecutando registro de lead...")
     try:
         sheet = iniciar_google()
+        if not sheet:
+            print("❌ Sheets no disponible")
+            return
 
         fecha = datetime.datetime.now(zona_horaria)
-        
+        cliente = buscar_cliente_en_cache(numero)
+        nuevo_registro = f"Cliente: {mensaje}"
         try:
-            # Leer historial actual
-            historial_actual = sheet.cell(fila_existente, 5).value or ""  # Columna E (5)
-            
-            nuevo_registro = f"Cliente: {mensaje}"
-            
-            # Sumar
-            if historial_actual:
-                contexto_final = historial_actual + " | " + nuevo_registro
+            if cliente:
+                historial_actual = cliente["datos"].get("Historial", "") or ""
+                if historial_actual:
+                    contexto_final = historial_actual + " | " + nuevo_registro
+                else:
+                    contexto_final = nuevo_registro
+                estado = "Atendido por el bot" if intent == "cierre" else "Pendiente Asesor"
             else:
                 contexto_final = nuevo_registro
-
-            
+                estado = "Pendiente Asesor"    
         except Exception as e:
             print(f"⚠️  Error actualizando: {e}")
 
@@ -187,28 +246,9 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
         turno         = extraer_turno(fecha)
         intercambios  = contar_intercambios(historial)
 
-        columna_numeros = sheet.col_values(3)
+        if cliente:
 
-        fila_existente = None
-
-        for i, valor in enumerate(columna_numeros[1:], start=2):
-            if str(valor).strip() == str(numero):
-                fila_existente = i
-                break
-        
-        print("Fila encontrada:", fila_existente)
-        if intent == "cierre":
-            estado = "Atendido por el bot"
-            print(f"✅ CIERRE: Cliente satisfecho")
-        elif fila_existente is not None:
-            estado = "Atendido por el bot"
-        else:
-            estado = "Pendiente Asesor"
-            print(f"📝 NUEVO: En espera de asesor")
-
-        if fila_existente:
-
-            sheet.update(f"D{fila_existente}:N{fila_existente}",[[
+            sheet.update(f"D{cliente['fila']}:N{cliente['fila']}",[[
                 mensaje,
                 contexto_final,
                 servicios,
@@ -227,7 +267,7 @@ def registrar_lead(numero, mensaje, empresa,historial, modo="AUTO",intent=None):
         else:
 
             fila = [
-                len(sheet.col_values(1)),   # ID rápido
+                len(cache_manager.obtener_todos_datos()) + 1,
                 modo,
                 numero,
                 mensaje,

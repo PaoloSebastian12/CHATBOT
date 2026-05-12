@@ -281,7 +281,31 @@ async def responder(data: RespuestaInput):
             raise ValueError("Mensaje vacío")
         
         # Enviar por WhatsApp
-        logger.info(f"   → Enviando por WhatsApp...")
+        logger.info(f"   → Enviando por WhatsApp... ✅ Validación OK")
+        sheet = iniciar_google()
+        if not sheet:
+            raise HTTPException(status_code=500, detail="Google Sheets no disponible")
+        data_sheet = sheet.get_all_records()
+        fila_existente = None
+        registro = None
+        for i, row in enumerate(data_sheet):
+            if str(row.get("Numero", "")).strip() == str(numero).strip():
+                fila_existente = i + 2  
+                registro = row
+                break
+        if not registro:
+            logger.error(f"❌ Cliente {numero} no encontrado en Sheets")
+            raise ValueError("Cliente no encontrado en la base de datos")
+        logger.info(f"   ✅ Cliente encontrado en fila {fila_existente}")
+        historial_actual = registro.get("Historial", "") or ""
+        logger.info(f"   📋 Historial actual: {historial_actual[:100]}...")
+        nuevo_mensaje = f"Bot: {mensaje}"
+        if historial_actual.strip():
+            contexto_final = historial_actual + " | " + nuevo_mensaje
+        else:
+            contexto_final = nuevo_mensaje
+
+        logger.info(f"   📤 Enviando a WhatsApp...")    
         try:
             await enviar_texto(numero, mensaje)
             logger.info(f"   ✅ WhatsApp OK")

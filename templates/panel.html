@@ -817,21 +817,17 @@
  
     // ===== ENVIAR RESPUESTA =====
     async function enviarRespuesta() {
-        let numero = document.getElementById('numero-manual').value.trim();
+        const numero = numeroActual || document.getElementById('numero-select').value.trim();
         const mensaje = document.getElementById('mensaje').value.trim();
         const alertDiv = document.getElementById('alert-respuesta');
         const btn = document.getElementById('btn-enviar');
  
         // Si está vacío, intentar obtener del select
         if (!numero) {
-            numero = document.getElementById('numero-select').value;
-        }
- 
-        // Validación
-        if (!numero) {
-            mostrarAlerta('alert-respuesta', '❌ Selecciona o escribe un número', 'error');
+            mostrarAlerta('alert-respuesta', '❌ Selecciona un chat primero', 'error');
             return;
         }
+ 
  
         if (!mensaje) {
             mostrarAlerta('alert-respuesta', '❌ Escribe un mensaje', 'error');
@@ -839,7 +835,9 @@
         }
  
         btn.disabled = true;
-        btn.textContent = '⏳ Enviando...';
+        btn.style.opacity = '0.6';
+        const textoOriginal = btn.textContent;
+        btn.innerHTML = '<span style="display:inline-block;animation:spin 0.8s linear infinite;margin-right:6px;">⏳</span>Enviando...';
  
         try {
             console.log(`📤 Enviando a ${numero}...`);
@@ -855,13 +853,15 @@
                 throw new Error(error.detail || `HTTP ${response.status}`);
             }
  
+            const respuestaData = await response.json(); 
             console.log('✅ Enviado');
             mostrarAlerta('alert-respuesta', '✅ Respuesta enviada a WhatsApp', 'success');
             document.getElementById('mensaje').value = '';
             document.getElementById('char-count').textContent = '';
  
             // Recargar chats
-            setTimeout(cargarChats, 3600000);
+            setTimeout(() => {
+            cargarHistorial(numero);}, 1000);
  
         } catch (error) {
             console.error('❌ Error:', error);
@@ -869,7 +869,8 @@
  
         } finally {
             btn.disabled = false;
-            btn.textContent = '📤 Enviar';
+            btn.style.opacity = '1';
+            btn.innerHTML = textoOriginal;
         }
     }
  

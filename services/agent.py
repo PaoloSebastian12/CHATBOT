@@ -14,15 +14,20 @@ def ejecutar_agente(numero, empresa, mensaje):
     print(f"   ✅ Empresa: {empresa.get('nombre', '?')}")
     print(f"   ✅ Mensaje del cliente: {mensaje[:50]}")
     print(f"{'='*70}\n")
-    respuesta = None
+    guardar_interaccion(numero, "user", mensaje)
     historial = obtener_historial(numero)
+
+
+    respuesta = None
     # Crear contexto
     contexto = ""
     for h in historial[-20:]:
         rol = "Cliente" if h["role"] == "user" else "BOT"
         contexto += f"{rol}: {h['content']} | "
     contexto += f"BOT: {respuesta}"
-    guardar_interaccion(numero, "user", mensaje)
+    
+
+
     try:
         sheet = iniciar_google()
         columna_numeros = sheet.col_values(3)
@@ -31,16 +36,18 @@ def ejecutar_agente(numero, empresa, mensaje):
             if str(valor).strip() == str(numero):
                 # Leer y sumar
                 historial_actual = sheet.cell(i, 5).value or ""
+                nuevo_mensaje_cliente = f"Cliente: {mensaje}"
                 if historial_actual:
-                    contexto_final = historial_actual + " | " + f"Bot: {respuesta}"
+                    contexto_final = historial_actual + " | " + nuevo_mensaje_cliente
                 else:
-                    contexto_final = f"Bot: {respuesta}"
+                    contexto_final = nuevo_mensaje_cliente
                 
                 # Guardar
                 sheet.update_cell(i, 5, contexto_final)
                 break
     except Exception as e:
         print(f"⚠️  Error: {e}")
+    respuesta = None
     if not historial:
             print("⚠️  ADVERTENCIA: Historial vacío (usuario nuevo)")
             historial = []
@@ -148,6 +155,23 @@ def ejecutar_agente(numero, empresa, mensaje):
             registrar_lead(numero, mensaje, empresa, historial, intent=intent)
             cambiar_modo(numero, "HUMANO")
     print("\nINTENT:", intent,"\n")
-    guardar_interaccion(numero, "assistant", respuesta)
+    if respuesta:
+        guardar_interaccion(numero, "assistant", respuesta)
+        try:
+            sheet = iniciar_google()
+            columna_numeros = sheet.col_values(3)
+            
+            for i, valor in enumerate(columna_numeros[1:], start=2):
+                if str(valor).strip() == str(numero):
+                    historial_actual = sheet.cell(i, 5).value or ""
+                    nuevo_mensaje_bot = f"BOT: {respuesta}"
+                    
+                    contexto_final = historial_actual + " | " + nuevo_mensaje_bot
+                    sheet.update_cell(i, 5, contexto_final)
+                    print(f"✅ Respuesta del bot guardada en Sheets")
+                    break
+        except Exception as e:
+            print(f"⚠️  Error guardando bot: {e}")
+    
     return respuesta
   
