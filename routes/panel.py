@@ -147,7 +147,7 @@ async def obtener_numeros():
         numeros = []
         for row in data:
             numero = row.get("Numero", "").strip()
-            if numero and numero != "":
+            if numero and isinstance(numero, str) and numero != "":
                 numeros.append({
                     "numero": numero,
                     "estado": row.get("Estado", "-"),
@@ -269,7 +269,6 @@ async def responder(data: RespuestaInput):
     """
     numero = data.numero
     mensaje = data.mensaje
-    
     logger.info(f"📨 Respuesta a {numero}")
     
     try:
@@ -297,13 +296,6 @@ async def responder(data: RespuestaInput):
             logger.error(f"❌ Cliente {numero} no encontrado en Sheets")
             raise ValueError("Cliente no encontrado en la base de datos")
         logger.info(f"   ✅ Cliente encontrado en fila {fila_existente}")
-        historial_actual = registro.get("Historial", "") or ""
-        logger.info(f"   📋 Historial actual: {historial_actual[:100]}...")
-        nuevo_mensaje = f"Bot: {mensaje}"
-        if historial_actual.strip():
-            contexto_final = historial_actual + " | " + nuevo_mensaje
-        else:
-            contexto_final = nuevo_mensaje
 
         logger.info(f"   📤 Enviando a WhatsApp...")    
         try:
@@ -312,9 +304,12 @@ async def responder(data: RespuestaInput):
         except Exception as e:
             logger.error(f"   ❌ Error WhatsApp: {e}")
             raise HTTPException(status_code=500, detail=f"Error WhatsApp: {str(e)}")
-        
-        # Guardar en historial
-        guardar_interaccion(numero, "assistant", mensaje)
+        logger.info(f"   💾 Guardando en Sheets...")
+        try:
+            # Guardar en historial
+            guardar_interaccion(numero, "assistant", mensaje)
+        except Exception as e:
+            logger.warning(f"   ⚠️  Error guardando (no es crítico): {e}")
         cambiar_modo(numero, "HUMANO")
         
         logger.info(f"✅ Respuesta enviada a {numero}")

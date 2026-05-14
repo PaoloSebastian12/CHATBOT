@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 import os
 import asyncio
 import time
+from services.tools import registrar_lead
+from services.memory import obtener_historial
 
 load_dotenv()
 
@@ -182,8 +184,8 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         message_obj = data["entry"][0]["changes"][0]["value"]["messages"][0]
         mensaje_id = message_obj["id"]
         mensaje_timestamp = int(message_obj.get("timestamp", 0))
-        if (int(time.time()) - mensaje_timestamp) > 500:
-            return {"status": "old_message_ignored"}
+        #if (int(time.time()) - mensaje_timestamp) > 500:
+            #return {"status": "old_message_ignored"}
         tiempo_actual = int(time.time())
         if (tiempo_actual - mensaje_timestamp) > 400:
             print("⏳ Mensaje viejo detectado (Servidor dormido). Ignorando para evitar respuestas fantasma.")
@@ -203,11 +205,14 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         if not empresa:
             print("❌ No se encontró la empresa. Abortando envío.")
             return {"reply": "Empresa no configurada"}
+        mensaje = clean_text(mensaje)
         modo = obtener_modo(numero_cliente)
+        historial = obtener_historial(numero_cliente)
+        registrar_lead(numero_cliente, mensaje, empresa, historial, modo=modo)
         if modo == "HUMANO":
             print("\n👨‍💼 Chat en modo humano. IA bloqueada.\n")
-            return {"status": "modo humano"}
-        mensaje = clean_text(mensaje)
+            return {"status": "modo_humano_mensaje_guardado"}
+    
         background_tasks.add_task(procesar_ia_y_enviar, mensaje, empresa, numero_cliente,mensaje_id)
         return {"status": "ok"}
     except Exception as e:
